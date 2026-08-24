@@ -10,6 +10,7 @@ import {
   ReturnBook,
   SearchBooks,
   UpdateBook,
+  User,
 } from "@mi-proyecto/domain";
 import { InMemoryBookRepository } from "../infra/repositories/InMemoryBookRepository";
 import { InMemoryLoanRepository } from "../infra/repositories/InMemoryLoanRepository";
@@ -34,11 +35,18 @@ export interface Container {
     cancelReservation: CancelReservation;
   };
   tokenService: JwtTokenService;
+  seedLibrarian: (opts: SeedLibrarianOptions) => Promise<void>;
 }
 
 interface BuildOptions {
   jwtSecret: string;
   jwtExpiresIn: string;
+}
+
+export interface SeedLibrarianOptions {
+  name: string;
+  email: string;
+  password: string;
 }
 
 export function buildContainer(opts: BuildOptions): Container {
@@ -51,8 +59,22 @@ export function buildContainer(opts: BuildOptions): Container {
   const tokenService = new JwtTokenService(opts.jwtSecret, opts.jwtExpiresIn);
   const clock = new SystemClock();
 
+  const seedLibrarian = async (seed: SeedLibrarianOptions) => {
+    const existing = await userRepository.findByEmail(seed.email);
+    if (existing) return;
+    const passwordHash = await passwordHasher.hash(seed.password);
+    const user = User.create({
+      name: seed.name,
+      email: seed.email,
+      passwordHash,
+      role: "LIBRARIAN",
+    });
+    await userRepository.save(user);
+  };
+
   return {
     tokenService,
+    seedLibrarian,
     useCases: {
       registerUser: new RegisterUser(userRepository, passwordHasher),
       authenticateUser: new AuthenticateUser(

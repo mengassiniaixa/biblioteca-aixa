@@ -2,6 +2,11 @@ interface Config {
   port: number;
   jwtSecret: string;
   jwtExpiresIn: string;
+  seedLibrarian: {
+    name: string;
+    email: string;
+    password: string;
+  };
 }
 
 export function loadConfig(): Config {
@@ -13,5 +18,14 @@ export function loadConfig(): Config {
     throw new Error(`Invalid PORT: ${process.env.PORT}`);
   }
 
-  return { port, jwtSecret, jwtExpiresIn };
+  return {
+    port,
+    jwtSecret,
+    jwtExpiresIn,
+    seedLibrarian: {
+      name: process.env.SEED_LIBRARIAN_NAME ?? "Bibliotecaria",
+      email: process.env.SEED_LIBRARIAN_EMAIL ?? "librarian@biblioteca.local",
+      password: process.env.SEED_LIBRARIAN_PASSWORD ?? "librarian123",
+    },
+  };
 }
