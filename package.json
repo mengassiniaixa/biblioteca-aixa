@@ -1,14 +1,21 @@
 {
   "name": "biblioteca-aixa",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "domain",
+    "apps/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "yarn workspace @mi-proyecto/domain test",
+    "test:coverage": "yarn workspace @mi-proyecto/domain test:coverage",
+    "typecheck": "yarn workspaces run typecheck",
+    "backend:dev": "yarn workspace @mi-proyecto/backend dev"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Sistema de gestión de biblioteca (monorepo)",
   "devDependencies": {
     "@types/jest": "29.5.14",
     "@types/node": "20.16.11",
