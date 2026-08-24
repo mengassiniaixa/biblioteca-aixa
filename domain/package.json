@@ -2,13 +2,14 @@
   "name": "@mi-proyecto/domain",
   "version": "1.0.0",
   "description": "Dominio del sistema de gestión de biblioteca",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/jest": "29.5.14",
