@@ -1,0 +1,319 @@
+{
+  "info": {
+    "name": "biblioteca-aixa",
+    "description": "Colección de endpoints del backend biblioteca-aixa. Auto-guarda tokens (librarianToken, memberToken) y IDs (bookId, loanId, reservationId) entre requests. Correr en orden: Auth (login LIBRARIAN + register/login MEMBER) → Books → Loans → Reservations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "librarianEmail", "value": "librarian@biblioteca.local" },
+    { "key": "librarianPassword", "value": "librarian123" },
+    { "key": "memberEmail", "value": "ana@example.com" },
+    { "key": "memberPassword", "value": "secret123" },
+    { "key": "librarianToken", "value": "" },
+    { "key": "memberToken", "value": "" },
+    { "key": "bookId", "value": "" },
+    { "key": "loanId", "value": "" },
+    { "key": "reservationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login LIBRARIAN (seed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('librarianToken', json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{librarianEmail}}\",\n  \"password\": \"{{librarianPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Register MEMBER",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ana Lectora\",\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Login MEMBER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('memberToken', json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{memberPassword}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Create book (LIBRARIAN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('bookId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{librarianToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": \"9780134494166\",\n  \"title\": \"Clean Architecture\",\n  \"author\": \"Robert C. Martin\",\n  \"category\": \"Software\",\n  \"totalCopies\": 3\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "List books",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "Search books (?title=Clean)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/books?title=Clean",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [{ "key": "title", "value": "Clean" }]
+            }
+          }
+        },
+        {
+          "name": "Update book (LIBRARIAN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{librarianToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"Ingeniería de Software\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete book (LIBRARIAN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{librarianToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/books/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["books", "{{bookId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loans",
+      "item": [
+        {
+          "name": "Create loan (MEMBER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('loanId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"{{bookId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/loans", "host": ["{{baseUrl}}"], "path": ["loans"] }
+          }
+        },
+        {
+          "name": "Return loan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/loans/{{loanId}}/return",
+              "host": ["{{baseUrl}}"],
+              "path": ["loans", "{{loanId}}", "return"]
+            }
+          }
+        },
+        {
+          "name": "List overdue (LIBRARIAN)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{librarianToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/loans/overdue",
+              "host": ["{{baseUrl}}"],
+              "path": ["loans", "overdue"]
+            }
+          }
+        },
+        {
+          "name": "List overdue as MEMBER (403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/loans/overdue",
+              "host": ["{{baseUrl}}"],
+              "path": ["loans", "overdue"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "item": [
+        {
+          "name": "Create reservation (MEMBER)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('reservationId', json.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{memberToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": \"{{bookId}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "Cancel reservation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{memberToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations", "{{reservationId}}", "cancel"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth errors",
+      "item": [
+        {
+          "name": "401 sin token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": \"9780306406157\",\n  \"title\": \"x\",\n  \"author\": \"y\",\n  \"category\": \"z\",\n  \"totalCopies\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "401 token inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer basura" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isbn\": \"9780306406157\",\n  \"title\": \"x\",\n  \"author\": \"y\",\n  \"category\": \"z\",\n  \"totalCopies\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        }
+      ]
+    }
+  ]
+}
