@@ -9,6 +9,7 @@ async function main() {
     jwtExpiresIn: config.jwtExpiresIn,
   });
   await container.seedLibrarian(config.seedLibrarian);
+  await container.seedBooks();
   const app = buildApp(container);
 
   app.listen(config.port, () => {

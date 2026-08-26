@@ -1,5 +1,6 @@
 import {
   AuthenticateUser,
+  Book,
   CancelReservation,
   CreateBook,
   DeleteBook,
@@ -36,6 +37,7 @@ export interface Container {
   };
   tokenService: JwtTokenService;
   seedLibrarian: (opts: SeedLibrarianOptions) => Promise<void>;
+  seedBooks: () => Promise<void>;
 }
 
 interface BuildOptions {
@@ -72,9 +74,48 @@ export function buildContainer(opts: BuildOptions): Container {
     await userRepository.save(user);
   };
 
+  const seedBooks = async () => {
+    const current = await bookRepository.findAll();
+    if (current.length > 0) return;
+    const initial = [
+      {
+        isbn: "9780441172719",
+        title: "Dune",
+        author: "Frank Herbert",
+        category: "SciFi",
+        totalCopies: 3,
+      },
+      {
+        isbn: "9780547928227",
+        title: "El Hobbit",
+        author: "J.R.R. Tolkien",
+        category: "Fantasía",
+        totalCopies: 2,
+      },
+      {
+        isbn: "9780132350884",
+        title: "Clean Code",
+        author: "Robert C. Martin",
+        category: "Programación",
+        totalCopies: 4,
+      },
+      {
+        isbn: "9780307474728",
+        title: "Cien años de soledad",
+        author: "Gabriel García Márquez",
+        category: "Ficción",
+        totalCopies: 2,
+      },
+    ];
+    for (const input of initial) {
+      await bookRepository.save(Book.create(input));
+    }
+  };
+
   return {
     tokenService,
     seedLibrarian,
+    seedBooks,
     useCases: {
       registerUser: new RegisterUser(userRepository, passwordHasher),
       authenticateUser: new AuthenticateUser(
