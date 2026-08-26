@@ -11,6 +11,18 @@ export function buildApp(container: Container): Express {
   const app = express();
   app.use(express.json());
 
+  const allowedOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", allowedOrigin);
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
   const authMiddleware = authenticate(container.tokenService);
   const { useCases } = container;
 
