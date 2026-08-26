@@ -1,6 +1,8 @@
 import { Book } from "../../entities/Book";
+import { ISBN } from "../../value-objects/ISBN";
 import { BookRepository } from "../../repositories/BookRepository";
 import { UserRepository } from "../../repositories/UserRepository";
+import { BookAlreadyExistsError } from "../../errors/BookAlreadyExistsError";
 import { UserNotFoundError } from "../../errors/UserNotFoundError";
 import { UnauthorizedError } from "../../errors/UnauthorizedError";
 
@@ -36,6 +38,12 @@ export class CreateBook {
     }
     if (!actor.isLibrarianOrAdmin()) {
       throw new UnauthorizedError("create book");
+    }
+
+    const normalizedIsbn = ISBN.create(input.isbn).value;
+    const existing = await this.bookRepository.findByIsbn(normalizedIsbn);
+    if (existing) {
+      throw new BookAlreadyExistsError(normalizedIsbn);
     }
 
     const book = Book.create({

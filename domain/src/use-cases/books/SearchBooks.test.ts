@@ -69,11 +69,11 @@ describe("SearchBooks", () => {
     expect(result[0].title).toBe("Rayuela");
   });
 
-  it("filtra por categoría (match exacto)", async () => {
+  it("filtra por categoría (match exacto, case-insensitive)", async () => {
     const { bookRepository, searchBooks } = setup();
     await seed(bookRepository);
 
-    const result = await searchBooks.execute({ category: "Tech" });
+    const result = await searchBooks.execute({ category: "tech" });
 
     expect(result).toHaveLength(2);
     expect(result.every((b) => b.category === "Tech")).toBe(true);

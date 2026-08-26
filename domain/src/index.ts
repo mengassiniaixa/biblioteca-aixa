@@ -18,6 +18,7 @@ export type { PasswordHasher } from "./services/PasswordHasher";
 export type { TokenService } from "./services/TokenService";
 
 export { DomainError } from "./errors/DomainError";
+export { BookAlreadyExistsError } from "./errors/BookAlreadyExistsError";
 export { BookAlreadyLoanedError } from "./errors/BookAlreadyLoanedError";
 export { BookHasActiveLoansError } from "./errors/BookHasActiveLoansError";
 export { BookNotAvailableError } from "./errors/BookNotAvailableError";

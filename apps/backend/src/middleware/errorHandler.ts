@@ -1,5 +1,6 @@
 import { ErrorRequestHandler } from "express";
 import {
+  BookAlreadyExistsError,
   BookAlreadyLoanedError,
   BookHasActiveLoansError,
   BookNotAvailableError,
@@ -30,6 +31,7 @@ function statusFor(err: Error): number {
   if (
     err instanceof EmailAlreadyInUseError ||
     err instanceof ReservationAlreadyExistsError ||
+    err instanceof BookAlreadyExistsError ||
     err instanceof BookAlreadyLoanedError ||
     err instanceof BookNotAvailableError ||
     err instanceof LoanLimitExceededError ||

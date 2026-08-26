@@ -4,6 +4,7 @@ import { InMemoryUserRepository } from "./__fakes__/InMemoryUserRepository";
 import { User } from "../../entities/User";
 import { UserNotFoundError } from "../../errors/UserNotFoundError";
 import { UnauthorizedError } from "../../errors/UnauthorizedError";
+import { BookAlreadyExistsError } from "../../errors/BookAlreadyExistsError";
 
 describe("CreateBook", () => {
   function setup() {
@@ -80,5 +81,21 @@ describe("CreateBook", () => {
     await expect(
       createBook.execute({ actorId: actor.id, ...validInput }),
     ).rejects.toThrow(UnauthorizedError);
+  });
+
+  it("lanza BookAlreadyExistsError si el ISBN ya existe (aunque venga con guiones)", async () => {
+    const { userRepository, createBook } = setup();
+    const actor = await createActor(userRepository, "LIBRARIAN");
+
+    await createBook.execute({ actorId: actor.id, ...validInput });
+
+    await expect(
+      createBook.execute({
+        actorId: actor.id,
+        ...validInput,
+        isbn: "978-3-16-148410-0",
+        title: "Otro título con el mismo ISBN",
+      }),
+    ).rejects.toThrow(BookAlreadyExistsError);
   });
 });

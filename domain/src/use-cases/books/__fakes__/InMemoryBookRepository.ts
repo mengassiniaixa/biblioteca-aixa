@@ -17,6 +17,10 @@ export class InMemoryBookRepository implements BookRepository {
     return this.books.find((b) => b.id === id) ?? null;
   }
 
+  async findByIsbn(isbn: string): Promise<Book | null> {
+    return this.books.find((b) => b.isbn === isbn) ?? null;
+  }
+
   async findAll(): Promise<Book[]> {
     return [...this.books];
   }
@@ -37,7 +41,11 @@ export class InMemoryBookRepository implements BookRepository {
         !b.author.toLowerCase().includes(query.author.toLowerCase())
       )
         return false;
-      if (query.category && b.category !== query.category) return false;
+      if (
+        query.category &&
+        b.category.toLowerCase() !== query.category.toLowerCase()
+      )
+        return false;
       return true;
     });
   }

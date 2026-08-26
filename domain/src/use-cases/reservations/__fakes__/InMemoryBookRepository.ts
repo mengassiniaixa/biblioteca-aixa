@@ -17,6 +17,10 @@ export class InMemoryBookRepository implements BookRepository {
     return this.books.find((b) => b.id === id) ?? null;
   }
 
+  async findByIsbn(isbn: string): Promise<Book | null> {
+    return this.books.find((b) => b.isbn === isbn) ?? null;
+  }
+
   async findAll(): Promise<Book[]> {
     return [...this.books];
   }
