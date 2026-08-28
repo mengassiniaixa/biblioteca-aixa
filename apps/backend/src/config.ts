@@ -7,6 +7,7 @@ interface Config {
     email: string;
     password: string;
   };
+  seedDemoOverdue: boolean;
 }
 
 export function loadConfig(): Config {
@@ -27,5 +28,6 @@ export function loadConfig(): Config {
       email: process.env.SEED_LIBRARIAN_EMAIL ?? "librarian@biblioteca.local",
       password: process.env.SEED_LIBRARIAN_PASSWORD ?? "librarian123",
     },
+    seedDemoOverdue: process.env.SEED_DEMO_OVERDUE === "true",
   };
 }

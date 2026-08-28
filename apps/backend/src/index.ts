@@ -10,6 +10,9 @@ async function main() {
   });
   await container.seedLibrarian(config.seedLibrarian);
   await container.seedBooks();
+  if (config.seedDemoOverdue) {
+    await container.seedDemoOverdue();
+  }
   const app = buildApp(container);
 
   app.listen(config.port, () => {
@@ -17,6 +20,11 @@ async function main() {
     console.log(
       `  seed LIBRARIAN: ${config.seedLibrarian.email} / ${config.seedLibrarian.password}`,
     );
+    if (config.seedDemoOverdue) {
+      console.log(
+        `  seed MEMBER demo overdue: demo-overdue@biblioteca.local / member123 (loan de Dune vencido hace 15 días)`,
+      );
+    }
   });
 }
 

@@ -7,6 +7,7 @@ import {
   ListMyLoans,
   ListMyReservations,
   ListOverdueLoans,
+  Loan,
   LoanBook,
   RegisterUser,
   ReserveBook,
@@ -42,6 +43,7 @@ export interface Container {
   tokenService: JwtTokenService;
   seedLibrarian: (opts: SeedLibrarianOptions) => Promise<void>;
   seedBooks: () => Promise<void>;
+  seedDemoOverdue: () => Promise<void>;
 }
 
 interface BuildOptions {
@@ -116,10 +118,42 @@ export function buildContainer(opts: BuildOptions): Container {
     }
   };
 
+  const seedDemoOverdue = async () => {
+    const email = "demo-overdue@biblioteca.local";
+    const existing = await userRepository.findByEmail(email);
+    if (existing) return;
+
+    const passwordHash = await passwordHasher.hash("member123");
+    const member = User.create({
+      name: "Socio Demo Vencido",
+      email,
+      passwordHash,
+      role: "MEMBER",
+    });
+    await userRepository.save(member);
+
+    const book = await bookRepository.findByIsbn("9780441172719");
+    if (!book) return;
+
+    const now = clock.now();
+    const loanDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const dueDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+    const loan = Loan.create({
+      bookId: book.id,
+      userId: member.id,
+      loanDate,
+      dueDate,
+    });
+    book.decreaseAvailability();
+    await bookRepository.save(book);
+    await loanRepository.save(loan);
+  };
+
   return {
     tokenService,
     seedLibrarian,
     seedBooks,
+    seedDemoOverdue,
     useCases: {
       registerUser: new RegisterUser(userRepository, passwordHasher),
       authenticateUser: new AuthenticateUser(
@@ -141,6 +175,7 @@ export function buildContainer(opts: BuildOptions): Container {
       listOverdueLoans: new ListOverdueLoans(
         loanRepository,
         userRepository,
+        bookRepository,
         clock,
       ),
       listMyLoans: new ListMyLoans(loanRepository),
