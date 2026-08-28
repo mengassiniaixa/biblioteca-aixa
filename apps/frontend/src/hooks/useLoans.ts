@@ -6,6 +6,7 @@ import {
 import { useAuth } from "../auth/AuthContext";
 
 const MY_LOANS_KEY = "loans/mine";
+const OVERDUE_LOANS_KEY = "loans/overdue";
 const BOOKS_KEY = "books";
 
 export function useMyLoans(enabled = true) {
@@ -13,6 +14,15 @@ export function useMyLoans(enabled = true) {
   return useQuery({
     queryKey: [MY_LOANS_KEY],
     queryFn: () => api.loans.listMine(),
+    enabled: isAuthenticated && enabled,
+  });
+}
+
+export function useOverdueLoans(enabled = true) {
+  const { api, isAuthenticated } = useAuth();
+  return useQuery({
+    queryKey: [OVERDUE_LOANS_KEY],
+    queryFn: () => api.loans.overdue(),
     enabled: isAuthenticated && enabled,
   });
 }

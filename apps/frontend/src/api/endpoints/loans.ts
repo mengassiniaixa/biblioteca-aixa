@@ -1,5 +1,5 @@
 import type { ApiClient } from "../client";
-import type { Loan, ReturnBookResponse } from "../types";
+import type { Loan, OverdueLoan, ReturnBookResponse } from "../types";
 
 export const loansEndpoints = (client: ApiClient) => ({
   loan: (bookId: string) =>
@@ -8,6 +8,6 @@ export const loansEndpoints = (client: ApiClient) => ({
     client.request<ReturnBookResponse>(`loans/${loanId}/return`, {
       method: "POST",
     }),
-  overdue: () => client.request<Loan[]>("loans/overdue"),
+  overdue: () => client.request<OverdueLoan[]>("loans/overdue"),
   listMine: () => client.request<Loan[]>("loans/mine"),
 });

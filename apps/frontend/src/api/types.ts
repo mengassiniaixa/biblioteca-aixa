@@ -78,3 +78,21 @@ export interface Reservation {
   reservationDate: string;
   status: string;
 }
+
+export interface OverdueLoan {
+  id: string;
+  loanDate: string;
+  dueDate: string;
+  daysOverdue: number;
+  book: {
+    id: string;
+    title: string;
+    author: string;
+    isbn: string;
+  };
+  member: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
