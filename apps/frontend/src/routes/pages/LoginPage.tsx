@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { LoginForm, type LoginFormValues } from "../../components/LoginForm/LoginForm";
 import { ApiError } from "../../api/ApiError";
@@ -42,6 +42,12 @@ export function LoginPage() {
         isSubmitting={isSubmitting}
         errorMessage={errorMessage}
       />
+      <p className="mt-4 text-sm text-slate-600">
+        ¿No tenés cuenta?{" "}
+        <Link to="/register" className="text-slate-800 underline">
+          Crear cuenta
+        </Link>
+      </p>
     </section>
   );
 }
