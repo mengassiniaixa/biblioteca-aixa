@@ -22,4 +22,12 @@ export class InMemoryReservationRepository implements ReservationRepository {
       (r) => r.bookId === bookId && r.status === "PENDING",
     );
   }
+
+  async findActiveByUser(userId: string): Promise<Reservation[]> {
+    return this.reservations.filter(
+      (r) =>
+        r.userId === userId &&
+        (r.status === "PENDING" || r.status === "AVAILABLE"),
+    );
+  }
 }
