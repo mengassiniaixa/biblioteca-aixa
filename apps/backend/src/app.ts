@@ -55,6 +55,7 @@ export function buildApp(container: Container): Express {
       loanBook: useCases.loanBook,
       returnBook: useCases.returnBook,
       listOverdueLoans: useCases.listOverdueLoans,
+      listMyLoans: useCases.listMyLoans,
       authMiddleware,
     }),
   );
@@ -64,6 +65,7 @@ export function buildApp(container: Container): Express {
     buildReservationsRouter({
       reserveBook: useCases.reserveBook,
       cancelReservation: useCases.cancelReservation,
+      listMyReservations: useCases.listMyReservations,
       authMiddleware,
     }),
   );

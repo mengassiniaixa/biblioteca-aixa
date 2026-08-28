@@ -1,6 +1,7 @@
 import { RequestHandler, Router } from "express";
 import { z } from "zod";
 import {
+  ListMyLoans,
   ListOverdueLoans,
   LoanBook,
   ReturnBook,
@@ -16,6 +17,7 @@ interface Deps {
   loanBook: LoanBook;
   returnBook: ReturnBook;
   listOverdueLoans: ListOverdueLoans;
+  listMyLoans: ListMyLoans;
   authMiddleware: RequestHandler;
 }
 
@@ -39,6 +41,16 @@ export function buildLoansRouter(deps: Deps): Router {
     asyncHandler(async (req, res) => {
       const result = await deps.returnBook.execute({ loanId: req.params.id });
       res.json(result);
+    }),
+  );
+
+  router.get(
+    "/mine",
+    deps.authMiddleware,
+    asyncHandler(async (req, res) => {
+      const auth = (req as AuthenticatedRequest).auth;
+      const loans = await deps.listMyLoans.execute({ userId: auth.userId });
+      res.json(loans);
     }),
   );
 
