@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { fn } from "@storybook/test";
 import { BookList } from "./BookList";
-import type { Book } from "../../api/types";
+import type { Book, Loan, Reservation } from "../../api/types";
 
 const sample: Book[] = [
   {
@@ -46,5 +46,50 @@ export const ConAccionesDeLibrarian: Story = {
     canManage: true,
     onEdit: fn(),
     onDelete: fn(),
+  },
+};
+
+const memberLoans: Loan[] = [
+  {
+    id: "loan-1",
+    bookId: "b1",
+    userId: "u1",
+    loanDate: "2026-08-01T00:00:00.000Z",
+    dueDate: "2026-08-15T00:00:00.000Z",
+    status: "ACTIVE",
+  },
+];
+
+const memberReservations: Reservation[] = [
+  {
+    id: "res-1",
+    bookId: "b2",
+    userId: "u1",
+    reservationDate: "2026-08-01T00:00:00.000Z",
+    status: "PENDING",
+  },
+];
+
+export const ConAccionesDeMember: Story = {
+  args: {
+    books: sample,
+    canMember: true,
+    myLoans: memberLoans,
+    myReservations: memberReservations,
+    onLoan: fn(),
+    onReturn: fn(),
+    onReserve: fn(),
+    onCancelReservation: fn(),
+  },
+};
+
+export const ConAccionesDeMemberSinRelacion: Story = {
+  args: {
+    books: sample,
+    canMember: true,
+    myLoans: [],
+    myReservations: [],
+    onLoan: fn(),
+    onReserve: fn(),
   },
 };

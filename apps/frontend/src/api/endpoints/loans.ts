@@ -9,4 +9,5 @@ export const loansEndpoints = (client: ApiClient) => ({
       method: "POST",
     }),
   overdue: () => client.request<Loan[]>("loans/overdue"),
+  listMine: () => client.request<Loan[]>("loans/mine"),
 });

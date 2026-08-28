@@ -11,4 +11,5 @@ export const reservationsEndpoints = (client: ApiClient) => ({
     client.request<Reservation>(`reservations/${reservationId}/cancel`, {
       method: "POST",
     }),
+  listMine: () => client.request<Reservation[]>("reservations/mine"),
 });

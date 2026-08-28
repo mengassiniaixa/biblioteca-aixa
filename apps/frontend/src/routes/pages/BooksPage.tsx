@@ -10,6 +10,16 @@ import {
   useSearchBooks,
   useUpdateBook,
 } from "../../hooks/useBooks";
+import {
+  useLoanBook,
+  useMyLoans,
+  useReturnLoan,
+} from "../../hooks/useLoans";
+import {
+  useCancelReservation,
+  useMyReservations,
+  useReserveBook,
+} from "../../hooks/useReservations";
 import { ApiError } from "../../api/ApiError";
 import type { Book, SearchBooksQuery } from "../../api/types";
 
@@ -21,6 +31,7 @@ type EditingState =
 export function BooksPage() {
   const { user, isAuthenticated } = useAuth();
   const canManage = user?.role === "LIBRARIAN" || user?.role === "ADMIN";
+  const canMember = user?.role === "MEMBER";
 
   const [query, setQuery] = useState<SearchBooksQuery>({});
   const [editing, setEditing] = useState<EditingState>({ kind: "none" });
@@ -30,6 +41,19 @@ export function BooksPage() {
   const createBook = useCreateBook();
   const updateBook = useUpdateBook();
   const deleteBook = useDeleteBook();
+
+  const myLoans = useMyLoans(canMember);
+  const myReservations = useMyReservations(canMember);
+  const loanBook = useLoanBook();
+  const returnLoan = useReturnLoan();
+  const reserveBook = useReserveBook();
+  const cancelReservation = useCancelReservation();
+
+  const memberActionPending =
+    loanBook.isPending ||
+    returnLoan.isPending ||
+    reserveBook.isPending ||
+    cancelReservation.isPending;
 
   const closeForm = () => {
     setEditing({ kind: "none" });
@@ -61,6 +85,38 @@ export function BooksPage() {
       window.alert(toErrorMessage(error));
     }
   };
+
+  const runMemberAction = async (
+    action: () => Promise<unknown>,
+    errorTitle: string,
+  ) => {
+    try {
+      await action();
+    } catch (error) {
+      window.alert(`${errorTitle}: ${toErrorMessage(error)}`);
+    }
+  };
+
+  const handleLoan = (bookId: string) =>
+    runMemberAction(
+      () => loanBook.mutateAsync(bookId),
+      "No pudimos prestar el libro",
+    );
+  const handleReturn = (loanId: string) =>
+    runMemberAction(
+      () => returnLoan.mutateAsync(loanId),
+      "No pudimos devolver el préstamo",
+    );
+  const handleReserve = (bookId: string) =>
+    runMemberAction(
+      () => reserveBook.mutateAsync(bookId),
+      "No pudimos crear la reserva",
+    );
+  const handleCancelReservation = (reservationId: string) =>
+    runMemberAction(
+      () => cancelReservation.mutateAsync(reservationId),
+      "No pudimos cancelar la reserva",
+    );
 
   return (
     <section className="mx-auto max-w-5xl p-8">
@@ -129,6 +185,14 @@ export function BooksPage() {
           canManage={canManage}
           onEdit={(book) => setEditing({ kind: "edit", book })}
           onDelete={handleDelete}
+          canMember={canMember}
+          myLoans={myLoans.data ?? []}
+          myReservations={myReservations.data ?? []}
+          onLoan={handleLoan}
+          onReturn={handleReturn}
+          onReserve={handleReserve}
+          onCancelReservation={handleCancelReservation}
+          isMemberActionPending={memberActionPending}
         />
       )}
     </section>
