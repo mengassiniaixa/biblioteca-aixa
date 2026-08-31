@@ -1,0 +1,33 @@
+# Node
+node_modules
+**/node_modules
+**/dist
+**/coverage
+
+# Logs / caches
+*.log
+**/*.log
+.cache
+**/.cache
+
+# Env / secretos
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Dev tooling
+.git
+.gitignore
+.github
+.vscode
+.idea
+
+# Storybook build output
+**/storybook-static
+
+# Postman collections (no van al contenedor)
+apps/backend/postman
+
+# Doc
+REFLEXION.md
