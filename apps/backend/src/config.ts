@@ -1,7 +1,11 @@
+export type RepositoryMode = "memory" | "pg";
+
 interface Config {
   port: number;
   jwtSecret: string;
   jwtExpiresIn: string;
+  repositoryMode: RepositoryMode;
+  databaseUrl: string | null;
   seedLibrarian: {
     name: string;
     email: string;
@@ -19,10 +23,25 @@ export function loadConfig(): Config {
     throw new Error(`Invalid PORT: ${process.env.PORT}`);
   }
 
+  const rawMode = (process.env.REPOSITORY_MODE ?? "memory").toLowerCase();
+  if (rawMode !== "memory" && rawMode !== "pg") {
+    throw new Error(
+      `Invalid REPOSITORY_MODE: ${process.env.REPOSITORY_MODE} (esperado "memory" o "pg")`,
+    );
+  }
+  const repositoryMode = rawMode as RepositoryMode;
+  const databaseUrl = process.env.DATABASE_URL ?? null;
+
+  if (repositoryMode === "pg" && !databaseUrl) {
+    throw new Error("REPOSITORY_MODE=pg requiere DATABASE_URL");
+  }
+
   return {
     port,
     jwtSecret,
     jwtExpiresIn,
+    repositoryMode,
+    databaseUrl,
     seedLibrarian: {
       name: process.env.SEED_LIBRARIAN_NAME ?? "Bibliotecaria",
       email: process.env.SEED_LIBRARIAN_EMAIL ?? "librarian@biblioteca.local",

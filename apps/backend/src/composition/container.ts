@@ -1,6 +1,7 @@
 import {
   AuthenticateUser,
   Book,
+  BookRepository,
   CancelReservation,
   CreateBook,
   DeleteBook,
@@ -9,20 +10,29 @@ import {
   ListOverdueLoans,
   Loan,
   LoanBook,
+  LoanRepository,
   RegisterUser,
+  ReservationRepository,
   ReserveBook,
   ReturnBook,
   SearchBooks,
   UpdateBook,
   User,
+  UserRepository,
 } from "@mi-proyecto/domain";
+import { getPool } from "../infra/db/pool";
 import { InMemoryBookRepository } from "../infra/repositories/InMemoryBookRepository";
 import { InMemoryLoanRepository } from "../infra/repositories/InMemoryLoanRepository";
 import { InMemoryReservationRepository } from "../infra/repositories/InMemoryReservationRepository";
 import { InMemoryUserRepository } from "../infra/repositories/InMemoryUserRepository";
+import { PgBookRepository } from "../infra/repositories/PgBookRepository";
+import { PgLoanRepository } from "../infra/repositories/PgLoanRepository";
+import { PgReservationRepository } from "../infra/repositories/PgReservationRepository";
+import { PgUserRepository } from "../infra/repositories/PgUserRepository";
 import { BcryptPasswordHasher } from "../infra/services/BcryptPasswordHasher";
 import { JwtTokenService } from "../infra/services/JwtTokenService";
 import { SystemClock } from "../infra/services/SystemClock";
+import type { RepositoryMode } from "../config";
 
 export interface Container {
   useCases: {
@@ -49,6 +59,8 @@ export interface Container {
 interface BuildOptions {
   jwtSecret: string;
   jwtExpiresIn: string;
+  repositoryMode: RepositoryMode;
+  databaseUrl: string | null;
 }
 
 export interface SeedLibrarianOptions {
@@ -57,11 +69,40 @@ export interface SeedLibrarianOptions {
   password: string;
 }
 
+interface Repositories {
+  userRepository: UserRepository;
+  bookRepository: BookRepository;
+  loanRepository: LoanRepository;
+  reservationRepository: ReservationRepository;
+}
+
+function buildRepositories(
+  mode: RepositoryMode,
+  databaseUrl: string | null,
+): Repositories {
+  if (mode === "pg") {
+    if (!databaseUrl) {
+      throw new Error("REPOSITORY_MODE=pg requiere databaseUrl");
+    }
+    const pool = getPool(databaseUrl);
+    return {
+      userRepository: new PgUserRepository(pool),
+      bookRepository: new PgBookRepository(pool),
+      loanRepository: new PgLoanRepository(pool),
+      reservationRepository: new PgReservationRepository(pool),
+    };
+  }
+  return {
+    userRepository: new InMemoryUserRepository(),
+    bookRepository: new InMemoryBookRepository(),
+    loanRepository: new InMemoryLoanRepository(),
+    reservationRepository: new InMemoryReservationRepository(),
+  };
+}
+
 export function buildContainer(opts: BuildOptions): Container {
-  const userRepository = new InMemoryUserRepository();
-  const bookRepository = new InMemoryBookRepository();
-  const loanRepository = new InMemoryLoanRepository();
-  const reservationRepository = new InMemoryReservationRepository();
+  const { userRepository, bookRepository, loanRepository, reservationRepository } =
+    buildRepositories(opts.repositoryMode, opts.databaseUrl);
 
   const passwordHasher = new BcryptPasswordHasher();
   const tokenService = new JwtTokenService(opts.jwtSecret, opts.jwtExpiresIn);
