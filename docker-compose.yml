@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-biblioteca}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biblioteca}
+      POSTGRES_DB: ${POSTGRES_DB:-biblioteca}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-biblioteca} -d ${POSTGRES_DB:-biblioteca}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      REPOSITORY_MODE: pg
+      DATABASE_URL: postgres://${POSTGRES_USER:-biblioteca}:${POSTGRES_PASSWORD:-biblioteca}@db:5432/${POSTGRES_DB:-biblioteca}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      SEED_LIBRARIAN_NAME: ${SEED_LIBRARIAN_NAME:-Bibliotecaria}
+      SEED_LIBRARIAN_EMAIL: ${SEED_LIBRARIAN_EMAIL:-librarian@biblioteca.local}
+      SEED_LIBRARIAN_PASSWORD: ${SEED_LIBRARIAN_PASSWORD:-librarian123}
+      SEED_DEMO_OVERDUE: ${SEED_DEMO_OVERDUE:-false}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  db-data:
