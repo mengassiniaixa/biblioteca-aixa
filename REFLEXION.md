@@ -2,7 +2,7 @@
 
 Notas sobre las decisiones de diseño, qué quedó fuera de alcance y qué haría distinto en una segunda iteración.
 
-> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas); la tercera cubre la Etapa 2.
+> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas), la tercera cubre la Etapa 2 y la cuarta la Etapa 3.
 
 ## Etapa 1 — Dominio
 
@@ -104,16 +104,72 @@ El backend no exponía CORS al principio de la etapa (no era necesario para los 
 - **Sin toasts / sistema de notificaciones.** Los errores de mutations se muestran con `window.alert`. Es feo pero explícito y no requiere una librería más.
 - **Sin tests E2E reales**. Los tests de páginas mockean `fetch`; no hay Playwright/Cypress. La verificación E2E fue manual (browser + backend real) al final de cada hito.
 
+## Etapa 3 — Docker & Postgres
+
+### Postgres real, sin ORM
+
+La consigna pedía docker-compose para backend + frontend + DB. Se podía interpretar "DB" en sentido laxo (mantener in-memory y cumplir la letra), pero eso hubiera sido tramposo con el espíritu del enunciado. Se optó por Postgres real, aprovechando que el dominio ya tenía los puertos definidos desde Etapa 1 — el cambio quedó contenido en `apps/backend/src/infra/repositories/Pg*Repository.ts` sin tocar una sola línea del dominio ni de los use-cases. Esa fue la prueba de que la arquitectura hexagonal valía la pena: agregar Postgres fue plumbing, no rediseño.
+
+Sobre el cliente: se descartó Prisma y TypeORM por overkill para 4 tablas. El paquete `pg` directo alcanzó, con SQL a mano y `Row → entity` explícito en cada adapter. Ventajas: cero magia, control total del schema, sin capa de abstracción que oculte el costo de las queries. Desventaja obvia: hay que escribir upserts a mano y el mapeo de columnas snake_case → camelCase también. Para este scope el trade-off fue claramente favorable.
+
+### Migraciones caseras
+
+Se rechazó `node-pg-migrate` por el mismo motivo que se rechazó `cors` en Etapa 2: lo que se resuelve en 30 líneas de código explícito no justifica una dependencia. El runner en `apps/backend/src/infra/db/migrator.ts` es un loop simple: lee `.sql` en orden, revisa contra la tabla `schema_migrations`, aplica los faltantes en una transacción por archivo. No hay `down` migrations — para el ciclo de vida de este proyecto (o incluso de la mayoría de proyectos reales), *forward-only* con pequeñas migraciones aditivas es suficiente. Cuando algo falla en producción se escribe otra migración que corrige, no se hace rollback.
+
+### Switch `REPOSITORY_MODE` — mantener los dos modos
+
+Decisión importante: se mantuvo el modo `memory` como default en vez de eliminar los in-memory ahora que hay Postgres. Los `InMemory*Repository.ts` no son código muerto: son la vía rápida para dev local (`yarn backend:dev` sin docker), son los fakes canónicos para futuros tests de integración, y son un contraste conceptual útil (dos implementaciones concretas del mismo puerto). El costo de mantenerlos es cero — no hay lógica que se duplique, cada uno hace su implementación.
+
+El switch vive en `container.ts::buildRepositories()`, una única función que decide qué familia armar. El resto del backend no cambia: sigue recibiendo `UserRepository`, `BookRepository`, etc. como interfaces.
+
+### El truco del `domain/package.json` en el Dockerfile
+
+Este fue el punto más incómodo del setup. `domain/package.json` tiene `main: "src/index.ts"` para que `tsx` en dev pueda importar el TypeScript raw sin build previo. Pero en runtime Docker se corre con `node dist/index.js` — node no sabe TypeScript y se rompe al intentar cargar `.../domain/src/index.ts`.
+
+Alternativas evaluadas:
+1. **Cambiar `main` permanentemente a `dist/index.js`** — habría obligado a correr `yarn workspace @mi-proyecto/domain build` antes de cada `yarn backend:dev`. Rompe la fricción cero del dev flow.
+2. **Bundler tipo esbuild** — habría inlineado el dominio en el bundle del backend. Simple para prod, pero suma una dependencia de build y pierde el mapping 1:1 al source original.
+3. **`tsx` en runtime** — la opción más simple, rechazada por peso de imagen y por no ser convención.
+4. **Parchear `package.json` en el builder stage del Dockerfile** — la que ganó.
+
+El parche vive en el stage `builder` como una línea de `node -e` que reescribe `main` y `types` a `dist/`. El runtime copia ese `package.json` parchado, no el original. Consecuencia: los dos flujos (`tsx` en dev, `node dist` en Docker) conviven sin fricción y sin cambios al workflow. Es feo pero está contenido en el Dockerfile y no contamina el repo.
+
+### Frontend estático servido con nginx
+
+El frontend es una SPA, así que la mejor unidad de despliegue es HTML+JS+CSS estático detrás de un servidor web. Se descartó `vite preview` (dev server) y también servir con node — nginx sirve archivos estáticos con menos memoria y mejor caching que cualquier alternativa Node. El único detalle específico del stack es el fallback SPA (`try_files $uri $uri/ /index.html`) para que react-router pueda resolver `/books`, `/overdue`, etc. cuando el usuario refresca la página. Sin ese fallback nginx respondería 404.
+
+### `VITE_API_BASE_URL` como build arg, no runtime
+
+Vite inlinea las variables `import.meta.env.VITE_*` en el bundle en tiempo de build — no las lee en runtime. Esto obliga a decidir la URL del backend al construir la imagen del frontend, no al arrancar el container. Para desarrollo con compose alcanza (`http://localhost:3000` como default). Para producción real (donde frontend y backend pueden vivir en dominios distintos) la solución correcta sería o (a) rebuild de la imagen por ambiente o (b) reverse proxy en nginx que redirija `/api/*` al backend interno — así el frontend usa rutas relativas y no necesita saber la URL. Por scope no se hizo, pero está bien identificado.
+
+### El bug del port publish de Postgres
+
+Al probar el compose la primera vez apareció un problema real: si el host tiene otro Postgres corriendo en `:5432`, el compose falla con `port is already allocated` o (peor) el container arranca sin network attachment y el backend rompe con `getaddrinfo ENOTFOUND db`. El fix: **no publicar el puerto de la DB al host por default**. El backend le pega a Postgres por la red interna del compose (hostname `db`), no vía localhost — no necesita el port mapping. La sección `ports:` de `db` quedó como bloque comentado, para descomentarla solo cuando se quiera conectar pgAdmin/psql desde el host.
+
+Es una decisión pequeña pero interesante: el instinto es "expongo todo por si acaso", pero cada puerto publicado es una superficie de conflicto y (en producción) de ataque. El principio correcto es publicar solo lo que realmente se consume desde afuera.
+
+### Scope consciente fuera de alcance
+
+- **Sin migrations `down`.** Forward-only. Si algo se va a romper, se escribe otra migración.
+- **Sin tests de integración contra Postgres real.** Los adapters PG hoy están cubiertos indirectamente por el smoke E2E manual del compose. Un `pg-mem` o un `testcontainers` con Postgres real serían el próximo paso natural.
+- **Sin healthcheck HTTP en el backend.** Compose usa `depends_on: db healthy` para el orden de arranque, pero no chequea el `/health` del backend. Si el backend arranca en un estado degradado, compose no lo detecta.
+- **Sin reverse proxy nginx**. Frontend y backend hablan directo (browser → `:3000`). Con proxy se podría exponer solo `:8080` con `/api/*` interno, cerrando el `:3000` al exterior y simplificando CORS. No se hizo por scope.
+- **Sin gestión de secretos.** `JWT_SECRET` viene por env plana. Para producción real habría que integrar con un secret manager (Docker secrets, Vault, o el equivalente cloud).
+- **Sin CI/CD.** No hay pipeline que corra `docker build` en push a `main`. Todo local.
+
 ## Qué haría distinto en una segunda iteración
 
 1. **Fakes compartidos para tests** — `domain/src/__test-utils__/` con builders (`aUser().withRole("LIBRARIAN").build()`) y fakes canónicos, en lugar de duplicar `__fakes__/` por carpeta.
 2. **Explicit output DTOs** — los use-cases hoy devuelven objetos "planos" armados a mano dentro del `execute`. Podría formalizarse con mappers dedicados para que el shape del output esté claro y sea consistente.
-3. **Un adapter Postgres real** — el dominio ya está listo para recibirlo (los puertos existen), solo falta el driver. Con TypeORM/Prisma o SQL a mano.
-4. **Tests de integración del backend** — hoy solo hay tests del dominio. Un `supertest` sobre `buildApp()` con el container real (in-memory) cubriría el mapeo HTTP → use-case → error.
+3. **Tests de integración de los adapters PG** — con `testcontainers` levantando un Postgres real en el pipeline de tests. Cubriría upserts, constraints, casos borde de reservas y préstamos concurrentes.
+4. **Tests de integración del backend HTTP** — hoy solo hay tests del dominio. Un `supertest` sobre `buildApp()` con el container real (in-memory alcanza) cubriría el mapeo HTTP → use-case → error.
 5. **Logging estructurado y correlación de request-id** — hoy el server hace `console.log` mínimo. Un pino/winston con request-id ayudaría a debug en un despliegue real.
 6. **Rate limiting y helmet** — no incluidos porque no eran parte del scope, pero son la primera capa que agregaría antes de exponer esto a Internet.
 7. **Cerrar `Fine` / `PayFine`** si el negocio lo pidiera. Hoy la entidad está huérfana.
 8. **Optimistic updates en mutations** — hoy `useLoanBook`, `useReserveBook`, etc. esperan la respuesta del server para invalidar y disparar el refetch. Con optimistic updates la UI reflejaría el cambio al instante y revertiría en `onError`. Vale la pena cuando la latencia sea real (Postgres remoto, no in-memory).
 9. **Toasts en vez de `window.alert`** para errores de mutations. Un `Toaster` global (por ejemplo `sonner` o el propio de shadcn/ui) sacaría los `alert()` sincrónicos que rompen el flow.
-10. **Tests E2E con Playwright** — los tests de páginas hoy mockean `fetch`, cubren el mapeo props↔UI pero no el flow real browser→backend. Playwright contra el backend real (in-memory) sería el complemento natural.
+10. **Tests E2E con Playwright** — los tests de páginas hoy mockean `fetch`, cubren el mapeo props↔UI pero no el flow real browser→backend. Playwright contra el compose ya levantado sería el complemento natural.
 11. **Página `/my-library` para el MEMBER** si el volumen de préstamos/reservas crece. Hoy las acciones contextuales por libro alcanzan pero no dan una vista consolidada de "lo que tengo".
+12. **Reverse proxy nginx que unifique frontend + backend detrás de un solo puerto**, con `/api/*` ruteado al backend interno. Simplificaría CORS, cerraría el `:3000` al exterior y haría que el frontend pueda usar rutas relativas (sin `VITE_API_BASE_URL` acoplado al build).
+13. **Healthcheck HTTP del backend en compose** para que `frontend` no arranque hasta que el backend responda `/health`, no solo hasta que el proceso levantó.
+14. **CI mínimo en GitHub Actions** — al menos `yarn test` de dominio + `yarn frontend:test` + `docker build` de ambas imágenes en push a `main`.
