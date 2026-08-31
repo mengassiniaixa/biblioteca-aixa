@@ -5,8 +5,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-biblioteca}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biblioteca}
       POSTGRES_DB: ${POSTGRES_DB:-biblioteca}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    # Postgres NO se publica al host por default: el backend le pega por la red
+    # interna del compose (host 'db' puerto 5432). Descomentar solo si queres
+    # conectarte con pgAdmin/psql desde tu maquina, y ajustar POSTGRES_PORT en
+    # .env si tenes otro Postgres ocupando el 5432.
+    # ports:
+    #   - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
