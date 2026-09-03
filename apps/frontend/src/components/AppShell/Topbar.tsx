@@ -23,7 +23,7 @@ export function Topbar() {
           aria-label="Ir al inicio"
         >
           <Library size={20} strokeWidth={2.25} />
-          <span className="text-base">biblioteca-aixa</span>
+          <span className="text-base">Sistema de biblioteca</span>
         </Link>
 
         <nav aria-label="Navegación principal" className="ml-4 flex items-center gap-1">

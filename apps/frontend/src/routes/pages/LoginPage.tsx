@@ -44,7 +44,7 @@ export function LoginPage() {
             className="flex items-center gap-2 font-bold tracking-tight"
           >
             <Library size={22} strokeWidth={2.25} />
-            <span>biblioteca-aixa</span>
+            <span>Sistema de biblioteca</span>
           </Link>
           <div className="max-w-md">
             <p className="text-xs uppercase tracking-widest text-paper/60">
@@ -58,7 +58,7 @@ export function LoginPage() {
               minimal.
             </p>
           </div>
-          <p className="text-xs text-paper/50">© biblioteca-aixa</p>
+          <p className="text-xs text-paper/50">© Sistema de biblioteca</p>
         </aside>
 
         <section className="flex items-center justify-center px-6 py-16 sm:px-10">
@@ -68,7 +68,7 @@ export function LoginPage() {
               className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-ink lg:hidden"
             >
               <Library size={18} strokeWidth={2.25} />
-              biblioteca-aixa
+              Sistema de biblioteca
             </Link>
             <p className="text-xs uppercase tracking-widest text-ink-muted">
               Cuenta
