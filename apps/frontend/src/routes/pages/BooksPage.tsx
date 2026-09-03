@@ -119,7 +119,7 @@ export function BooksPage() {
     );
 
   return (
-    <section className="mx-auto max-w-5xl p-8">
+    <section>
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Libros</h1>
@@ -132,31 +132,18 @@ export function BooksPage() {
             </p>
           ) : (
             <p className="text-sm text-slate-500">
-              Sesión como <strong>{user?.role}</strong>.{" "}
-              <Link className="underline hover:text-slate-700" to="/">
-                Inicio
-              </Link>
+              Bienvenida, <strong>{user?.role}</strong>.
             </p>
           )}
         </div>
-        {canManage ? (
-          <div className="flex gap-2">
-            <Link
-              to="/overdue"
-              className="rounded border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Ver vencidos
-            </Link>
-            {editing.kind === "none" ? (
-              <button
-                type="button"
-                onClick={() => setEditing({ kind: "create" })}
-                className="rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
-              >
-                Nuevo libro
-              </button>
-            ) : null}
-          </div>
+        {canManage && editing.kind === "none" ? (
+          <button
+            type="button"
+            onClick={() => setEditing({ kind: "create" })}
+            className="rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          >
+            Nuevo libro
+          </button>
         ) : null}
       </header>
 
