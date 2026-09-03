@@ -11,9 +11,16 @@ export function buildApp(container: Container): Express {
   const app = express();
   app.use(express.json());
 
-  const allowedOrigin = process.env.CORS_ORIGIN ?? "http://localhost:5173";
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", allowedOrigin);
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin");
+    }
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
     if (req.method === "OPTIONS") {
