@@ -5,5 +5,6 @@ export interface LoanRepository {
   findById(id: string): Promise<Loan | null>;
   findActiveByUserAndBook(userId: string, bookId: string): Promise<Loan | null>;
   findActiveByUser(userId: string): Promise<Loan[]>;
+  findByUser(userId: string): Promise<Loan[]>;
   findOverdue(today: Date): Promise<Loan[]>;
 }

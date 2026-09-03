@@ -1,16 +1,17 @@
 import { LoanRepository } from "../../repositories/LoanRepository";
 import { BookRepository } from "../../repositories/BookRepository";
 
-interface ListMyLoansInput {
+interface ListMyLoanHistoryInput {
   userId: string;
 }
 
-interface MyLoanOutput {
+interface LoanHistoryEntry {
   id: string;
   bookId: string;
   userId: string;
   loanDate: Date;
   dueDate: Date;
+  returnDate: Date | null;
   status: string;
   book: {
     id: string;
@@ -20,16 +21,16 @@ interface MyLoanOutput {
   };
 }
 
-export class ListMyLoans {
+export class ListMyLoanHistory {
   constructor(
     private loanRepository: LoanRepository,
     private bookRepository: BookRepository,
   ) {}
 
-  async execute(input: ListMyLoansInput): Promise<MyLoanOutput[]> {
-    const loans = await this.loanRepository.findActiveByUser(input.userId);
+  async execute(input: ListMyLoanHistoryInput): Promise<LoanHistoryEntry[]> {
+    const loans = await this.loanRepository.findByUser(input.userId);
 
-    const outputs: MyLoanOutput[] = [];
+    const outputs: LoanHistoryEntry[] = [];
     for (const loan of loans) {
       const book = await this.bookRepository.findById(loan.bookId);
       if (!book) continue;
@@ -40,6 +41,7 @@ export class ListMyLoans {
         userId: loan.userId,
         loanDate: loan.loanDate,
         dueDate: loan.dueDate,
+        returnDate: loan.returnDate ?? null,
         status: loan.status,
         book: {
           id: book.id,
@@ -50,6 +52,7 @@ export class ListMyLoans {
       });
     }
 
+    outputs.sort((a, b) => b.loanDate.getTime() - a.loanDate.getTime());
     return outputs;
   }
 }

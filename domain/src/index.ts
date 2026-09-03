@@ -42,6 +42,7 @@ export { LoanBook } from "./use-cases/loans/LoanBook";
 export { ReturnBook } from "./use-cases/loans/ReturnBook";
 export { ListOverdueLoans } from "./use-cases/loans/ListOverdueLoans";
 export { ListMyLoans } from "./use-cases/loans/ListMyLoans";
+export { ListMyLoanHistory } from "./use-cases/loans/ListMyLoanHistory";
 export { ReserveBook } from "./use-cases/reservations/ReserveBook";
 export { CancelReservation } from "./use-cases/reservations/CancelReservation";
 export { ListMyReservations } from "./use-cases/reservations/ListMyReservations";
