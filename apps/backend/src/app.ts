@@ -63,6 +63,7 @@ export function buildApp(container: Container): Express {
       returnBook: useCases.returnBook,
       listOverdueLoans: useCases.listOverdueLoans,
       listMyLoans: useCases.listMyLoans,
+      listMyLoanHistory: useCases.listMyLoanHistory,
       authMiddleware,
     }),
   );

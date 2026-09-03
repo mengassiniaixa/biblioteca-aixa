@@ -34,6 +34,10 @@ export class InMemoryLoanRepository implements LoanRepository {
     );
   }
 
+  async findByUser(userId: string): Promise<Loan[]> {
+    return this.loans.filter((l) => l.userId === userId);
+  }
+
   async findOverdue(today: Date): Promise<Loan[]> {
     return this.loans.filter((l) => l.isOverdue(today));
   }

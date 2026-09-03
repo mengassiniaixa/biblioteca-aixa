@@ -6,6 +6,7 @@ import {
   CreateBook,
   DeleteBook,
   ListMyLoans,
+  ListMyLoanHistory,
   ListMyReservations,
   ListOverdueLoans,
   Loan,
@@ -46,6 +47,7 @@ export interface Container {
     returnBook: ReturnBook;
     listOverdueLoans: ListOverdueLoans;
     listMyLoans: ListMyLoans;
+    listMyLoanHistory: ListMyLoanHistory;
     reserveBook: ReserveBook;
     cancelReservation: CancelReservation;
     listMyReservations: ListMyReservations;
@@ -219,7 +221,8 @@ export function buildContainer(opts: BuildOptions): Container {
         bookRepository,
         clock,
       ),
-      listMyLoans: new ListMyLoans(loanRepository),
+      listMyLoans: new ListMyLoans(loanRepository, bookRepository),
+      listMyLoanHistory: new ListMyLoanHistory(loanRepository, bookRepository),
       reserveBook: new ReserveBook(
         reservationRepository,
         bookRepository,
@@ -229,7 +232,10 @@ export function buildContainer(opts: BuildOptions): Container {
         reservationRepository,
         userRepository,
       ),
-      listMyReservations: new ListMyReservations(reservationRepository),
+      listMyReservations: new ListMyReservations(
+        reservationRepository,
+        bookRepository,
+      ),
     },
   };
 }

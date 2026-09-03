@@ -81,6 +81,14 @@ export class PgLoanRepository implements LoanRepository {
     return rows.map(toEntity);
   }
 
+  async findByUser(userId: string): Promise<Loan[]> {
+    const { rows } = await this.pool.query<Row>(
+      `SELECT ${SELECT_COLS} FROM loans WHERE user_id = $1 ORDER BY loan_date DESC`,
+      [userId],
+    );
+    return rows.map(toEntity);
+  }
+
   async findOverdue(today: Date): Promise<Loan[]> {
     const { rows } = await this.pool.query<Row>(
       `SELECT ${SELECT_COLS} FROM loans WHERE status = 'ACTIVE' AND due_date < $1`,
