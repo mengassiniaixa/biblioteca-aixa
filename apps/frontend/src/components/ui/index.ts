@@ -4,4 +4,8 @@ export { Input } from "./Input";
 export { Card, CardHeader, CardTitle, CardDescription } from "./Card";
 export { Badge } from "./Badge";
 export type { BadgeTone } from "./Badge";
+export { ToastProvider, useToast } from "./Toast";
+export type { Toast, ToastKind, ToastOptions } from "./Toast";
+export { ConfirmProvider, useConfirm } from "./ConfirmDialog";
+export type { ConfirmOptions } from "./ConfirmDialog";
 export { cn } from "./cn";

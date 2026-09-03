@@ -22,6 +22,7 @@ import {
 } from "../../hooks/useReservations";
 import { ApiError } from "../../api/ApiError";
 import type { Book, SearchBooksQuery } from "../../api/types";
+import { useToast, useConfirm } from "../../components/ui";
 
 type EditingState =
   | { kind: "none" }
@@ -32,6 +33,8 @@ export function BooksPage() {
   const { user, isAuthenticated } = useAuth();
   const canManage = user?.role === "LIBRARIAN" || user?.role === "ADMIN";
   const canMember = user?.role === "MEMBER";
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const [query, setQuery] = useState<SearchBooksQuery>({});
   const [editing, setEditing] = useState<EditingState>({ kind: "none" });
@@ -65,11 +68,13 @@ export function BooksPage() {
     try {
       if (payload.mode === "create") {
         await createBook.mutateAsync(payload.values);
+        toast.success(`Libro "${payload.values.title}" creado.`);
       } else if (editing.kind === "edit") {
         await updateBook.mutateAsync({
           id: editing.book.id,
           body: payload.values,
         });
+        toast.success(`Libro "${payload.values.title}" actualizado.`);
       }
       closeForm();
     } catch (error) {
@@ -78,43 +83,56 @@ export function BooksPage() {
   };
 
   const handleDelete = async (book: Book) => {
-    if (!window.confirm(`¿Eliminar "${book.title}"?`)) return;
+    const ok = await confirm({
+      title: `Eliminar "${book.title}"`,
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      tone: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteBook.mutateAsync(book);
+      toast.success(`"${book.title}" fue eliminado.`);
     } catch (error) {
-      window.alert(toErrorMessage(error));
+      toast.error(toErrorMessage(error), { title: "No pudimos eliminarlo" });
     }
   };
 
   const runMemberAction = async (
     action: () => Promise<unknown>,
+    successMessage: string,
     errorTitle: string,
   ) => {
     try {
       await action();
+      toast.success(successMessage);
     } catch (error) {
-      window.alert(`${errorTitle}: ${toErrorMessage(error)}`);
+      toast.error(toErrorMessage(error), { title: errorTitle });
     }
   };
 
   const handleLoan = (bookId: string) =>
     runMemberAction(
       () => loanBook.mutateAsync(bookId),
+      "Préstamo registrado.",
       "No pudimos prestar el libro",
     );
   const handleReturn = (loanId: string) =>
     runMemberAction(
       () => returnLoan.mutateAsync(loanId),
+      "Devolución registrada.",
       "No pudimos devolver el préstamo",
     );
   const handleReserve = (bookId: string) =>
     runMemberAction(
       () => reserveBook.mutateAsync(bookId),
+      "Reserva creada.",
       "No pudimos crear la reserva",
     );
   const handleCancelReservation = (reservationId: string) =>
     runMemberAction(
       () => cancelReservation.mutateAsync(reservationId),
+      "Reserva cancelada.",
       "No pudimos cancelar la reserva",
     );
 

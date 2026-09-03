@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BooksPage } from "./BooksPage";
 import { AuthProvider, AUTH_TOKEN_STORAGE_KEY } from "../../auth/AuthContext";
+import { ToastProvider, ConfirmProvider } from "../../components/ui";
 import type { Book } from "../../api/types";
 
 function makeJwt(payload: Record<string, unknown>): string {
@@ -58,9 +59,13 @@ function renderPage(storage = fakeStorage()) {
   return render(
     <QueryClientProvider client={client}>
       <AuthProvider storage={storage}>
-        <MemoryRouter>
-          <BooksPage />
-        </MemoryRouter>
+        <ToastProvider>
+          <ConfirmProvider>
+            <MemoryRouter>
+              <BooksPage />
+            </MemoryRouter>
+          </ConfirmProvider>
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>,
   );
