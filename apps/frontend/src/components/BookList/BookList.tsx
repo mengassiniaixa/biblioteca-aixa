@@ -1,4 +1,6 @@
 import type { Book, Loan, Reservation } from "../../api/types";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 interface BookListProps {
   books: Book[];
@@ -53,6 +55,16 @@ const MEMBER_ACTION_LABEL: Record<MemberAction["kind"], string> = {
   cancel: "Cancelar reserva",
 };
 
+const MEMBER_ACTION_VARIANT: Record<
+  MemberAction["kind"],
+  "primary" | "secondary" | "ghost" | "danger"
+> = {
+  loan: "primary",
+  reserve: "secondary",
+  return: "secondary",
+  cancel: "ghost",
+};
+
 export function BookList({
   books,
   canManage = false,
@@ -69,7 +81,7 @@ export function BookList({
 }: BookListProps) {
   if (books.length === 0) {
     return (
-      <p className="rounded border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+      <p className="rounded border border-dashed border-paper-edge bg-paper p-4 text-sm text-ink-muted">
         No hay libros para mostrar.
       </p>
     );
@@ -85,67 +97,82 @@ export function BookList({
   };
 
   return (
-    <table className="w-full border-collapse overflow-hidden rounded border border-slate-200 bg-white text-sm">
-      <thead className="bg-slate-100 text-left text-slate-700">
-        <tr>
-          <th className="px-3 py-2">Título</th>
-          <th className="px-3 py-2">Autor</th>
-          <th className="px-3 py-2">Categoría</th>
-          <th className="px-3 py-2">ISBN</th>
-          <th className="px-3 py-2">Disponibles</th>
-          {showActions ? <th className="px-3 py-2">Acciones</th> : null}
-        </tr>
-      </thead>
-      <tbody>
-        {books.map((book) => {
-          const memberAction = canMember
-            ? resolveMemberAction(book, myLoans, myReservations)
-            : null;
-          return (
-            <tr key={book.id} className="border-t border-slate-200">
-              <td className="px-3 py-2 font-medium text-slate-800">{book.title}</td>
-              <td className="px-3 py-2 text-slate-700">{book.author}</td>
-              <td className="px-3 py-2 text-slate-700">{book.category}</td>
-              <td className="px-3 py-2 text-slate-500">{book.isbn}</td>
-              <td className="px-3 py-2 text-slate-700">
-                {book.availableCopies} / {book.totalCopies}
-              </td>
-              {showActions ? (
-                <td className="flex flex-wrap gap-2 px-3 py-2">
-                  {canManage ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => onEdit?.(book)}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete?.(book)}
-                        className="rounded border border-red-300 px-2 py-1 text-xs text-red-700 hover:bg-red-50"
-                      >
-                        Eliminar
-                      </button>
-                    </>
-                  ) : null}
-                  {memberAction ? (
-                    <button
-                      type="button"
-                      onClick={() => handleMemberAction(memberAction)}
-                      disabled={isMemberActionPending}
-                      className="rounded border border-emerald-300 px-2 py-1 text-xs text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {MEMBER_ACTION_LABEL[memberAction.kind]}
-                    </button>
-                  ) : null}
+    <div className="overflow-hidden rounded border border-paper-edge bg-paper shadow-card">
+      <table className="w-full border-collapse text-sm">
+        <thead className="bg-paper-mid text-left">
+          <tr className="text-xs uppercase tracking-wide text-ink-muted">
+            <th className="px-3 py-2 font-medium">Título</th>
+            <th className="px-3 py-2 font-medium">Autor</th>
+            <th className="px-3 py-2 font-medium">Categoría</th>
+            <th className="px-3 py-2 font-medium">ISBN</th>
+            <th className="px-3 py-2 font-medium">Disponibles</th>
+            {showActions ? (
+              <th className="px-3 py-2 font-medium">Acciones</th>
+            ) : null}
+          </tr>
+        </thead>
+        <tbody>
+          {books.map((book) => {
+            const memberAction = canMember
+              ? resolveMemberAction(book, myLoans, myReservations)
+              : null;
+            const available = book.availableCopies > 0;
+            return (
+              <tr key={book.id} className="border-t border-paper-edge">
+                <td className="px-3 py-2 font-medium text-ink">
+                  {book.title}
                 </td>
-              ) : null}
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+                <td className="px-3 py-2 text-ink-mid">{book.author}</td>
+                <td className="px-3 py-2">
+                  <Badge tone="muted">{book.category}</Badge>
+                </td>
+                <td className="px-3 py-2 font-mono text-xs text-ink-muted">
+                  {book.isbn}
+                </td>
+                <td className="px-3 py-2">
+                  <Badge tone={available ? "success" : "danger"}>
+                    {book.availableCopies} / {book.totalCopies}
+                  </Badge>
+                </td>
+                {showActions ? (
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap gap-2">
+                      {canManage ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => onEdit?.(book)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => onDelete?.(book)}
+                          >
+                            Eliminar
+                          </Button>
+                        </>
+                      ) : null}
+                      {memberAction ? (
+                        <Button
+                          size="sm"
+                          variant={MEMBER_ACTION_VARIANT[memberAction.kind]}
+                          onClick={() => handleMemberAction(memberAction)}
+                          disabled={isMemberActionPending}
+                        >
+                          {MEMBER_ACTION_LABEL[memberAction.kind]}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

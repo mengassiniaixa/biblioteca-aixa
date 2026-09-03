@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { BookSearchForm } from "../../components/BookSearchForm/BookSearchForm";
 import { BookList } from "../../components/BookList/BookList";
@@ -22,7 +23,7 @@ import {
 } from "../../hooks/useReservations";
 import { ApiError } from "../../api/ApiError";
 import type { Book, SearchBooksQuery } from "../../api/types";
-import { useToast, useConfirm } from "../../components/ui";
+import { Button, useToast, useConfirm } from "../../components/ui";
 
 type EditingState =
   | { kind: "none" }
@@ -137,63 +138,67 @@ export function BooksPage() {
     );
 
   return (
-    <section>
-      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+    <section className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-800">Libros</h1>
+          <p className="text-xs uppercase tracking-widest text-ink-muted">
+            Catálogo
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
+            Libros
+          </h1>
           {!isAuthenticated ? (
-            <p className="text-sm text-slate-500">
-              <Link className="underline hover:text-slate-700" to="/login">
+            <p className="mt-1 text-sm text-ink-mid">
+              <Link
+                className="font-medium text-ink underline underline-offset-4 hover:text-accent"
+                to="/login"
+              >
                 Iniciá sesión
               </Link>{" "}
               para reservar o pedir prestado.
             </p>
           ) : (
-            <p className="text-sm text-slate-500">
-              Bienvenida, <strong>{user?.role}</strong>.
+            <p className="mt-1 text-sm text-ink-mid">
+              Bienvenida, <strong className="text-ink">{user?.role}</strong>.
             </p>
           )}
         </div>
         {canManage && editing.kind === "none" ? (
-          <button
-            type="button"
+          <Button
+            variant="primary"
             onClick={() => setEditing({ kind: "create" })}
-            className="rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+            iconLeft={<Plus size={16} />}
           >
             Nuevo libro
-          </button>
+          </Button>
         ) : null}
       </header>
 
-      <div className="mb-4">
-        <BookSearchForm
-          initialValues={query}
-          onSubmit={(next) => setQuery(next)}
-          isSearching={search.isFetching}
-        />
-      </div>
+      <BookSearchForm
+        initialValues={query}
+        onSubmit={(next) => setQuery(next)}
+        isSearching={search.isFetching}
+      />
 
       {editing.kind !== "none" ? (
-        <div className="mb-4">
-          <BookForm
-            mode={editing.kind === "edit" ? "edit" : "create"}
-            initialValues={editing.kind === "edit" ? editing.book : undefined}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-            isSubmitting={createBook.isPending || updateBook.isPending}
-            errorMessage={formError}
-          />
-        </div>
+        <BookForm
+          mode={editing.kind === "edit" ? "edit" : "create"}
+          initialValues={editing.kind === "edit" ? editing.book : undefined}
+          onSubmit={handleSubmit}
+          onCancel={closeForm}
+          isSubmitting={createBook.isPending || updateBook.isPending}
+          errorMessage={formError}
+        />
       ) : null}
 
       {search.isError ? (
-        <p role="alert" className="mb-4 text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent">
           Error al cargar libros: {toErrorMessage(search.error)}
         </p>
       ) : null}
 
       {search.isLoading ? (
-        <p className="text-sm text-slate-500">Cargando libros…</p>
+        <p className="text-sm text-ink-muted">Cargando libros…</p>
       ) : (
         <BookList
           books={search.data ?? []}

@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Book, CreateBookRequest, UpdateBookRequest } from "../../api/types";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 
 export type BookFormMode = "create" | "edit";
 
@@ -70,102 +72,88 @@ export function BookForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-3 rounded border border-slate-200 bg-white p-4 sm:grid-cols-2"
+      className="grid grid-cols-1 gap-4 rounded border border-paper-edge bg-paper p-5 shadow-card sm:grid-cols-2"
     >
-      <h2 className="sm:col-span-2 text-lg font-semibold text-slate-800">
+      <h2 className="sm:col-span-2 text-lg font-semibold text-ink">
         {mode === "edit" ? "Editar libro" : "Nuevo libro"}
       </h2>
 
       {mode === "create" ? (
-        <label className="flex flex-col gap-1 text-sm text-slate-700">
-          ISBN
-          <input
-            type="text"
-            required
-            value={isbn}
-            onChange={(e) => setIsbn(e.target.value)}
-            disabled={isSubmitting}
-            className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-          />
-        </label>
+        <Input
+          label="ISBN"
+          type="text"
+          required
+          value={isbn}
+          onChange={(e) => setIsbn(e.target.value)}
+          disabled={isSubmitting}
+        />
       ) : null}
 
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Título
-        <input
-          type="text"
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
+      <Input
+        label="Título"
+        type="text"
+        required
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        disabled={isSubmitting}
+      />
 
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Autor
-        <input
-          type="text"
-          required
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
+      <Input
+        label="Autor"
+        type="text"
+        required
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+        disabled={isSubmitting}
+      />
 
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Categoría
-        <input
-          type="text"
-          required
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
+      <Input
+        label="Categoría"
+        type="text"
+        required
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        disabled={isSubmitting}
+      />
 
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Copias totales
-        <input
-          type="number"
-          min={1}
-          required
-          value={totalCopies}
-          onChange={(e) => setTotalCopies(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
+      <Input
+        label="Copias totales"
+        type="number"
+        min={1}
+        required
+        value={totalCopies}
+        onChange={(e) => setTotalCopies(e.target.value)}
+        disabled={isSubmitting}
+      />
 
       {errorMessage ? (
-        <p role="alert" className="sm:col-span-2 text-sm text-red-600">
+        <p role="alert" className="sm:col-span-2 text-sm text-accent">
           {errorMessage}
         </p>
       ) : null}
 
       <div className="sm:col-span-2 flex gap-2">
-        <button
+        <Button
           type="submit"
+          variant="primary"
+          isLoading={isSubmitting}
           disabled={isSubmitting}
-          className="rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
             ? "Guardando…"
             : mode === "edit"
               ? "Guardar cambios"
               : "Crear libro"}
-        </button>
+        </Button>
         {onCancel ? (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
           >
             Cancelar
-          </button>
+          </Button>
         ) : null}
       </div>
     </form>

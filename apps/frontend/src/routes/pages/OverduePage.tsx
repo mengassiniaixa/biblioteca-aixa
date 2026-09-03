@@ -6,17 +6,23 @@ export function OverduePage() {
   const overdue = useOverdueLoans();
 
   return (
-    <section>
-      <header className="mb-4">
-        <h1 className="text-2xl font-semibold text-slate-800">
+    <section className="space-y-6">
+      <header>
+        <p className="text-xs uppercase tracking-widest text-ink-muted">
+          Bibliotecarixs
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
           Préstamos vencidos
         </h1>
+        <p className="mt-1 text-sm text-ink-mid">
+          Préstamos activos cuya fecha de devolución ya pasó.
+        </p>
       </header>
 
       {overdue.isPending ? (
-        <p className="text-sm text-slate-500">Cargando…</p>
+        <p className="text-sm text-ink-muted">Cargando…</p>
       ) : overdue.isError ? (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent">
           {toErrorMessage(overdue.error)}
         </p>
       ) : (

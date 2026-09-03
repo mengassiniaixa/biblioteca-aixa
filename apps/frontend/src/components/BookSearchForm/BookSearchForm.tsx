@@ -1,5 +1,8 @@
 import { useState, type FormEvent } from "react";
+import { Search } from "lucide-react";
 import type { SearchBooksQuery } from "../../api/types";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 
 interface BookSearchFormProps {
   initialValues?: SearchBooksQuery;
@@ -24,43 +27,36 @@ export function BookSearchForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-3 rounded border border-slate-200 bg-white p-4 sm:grid-cols-4"
+      className="grid grid-cols-1 gap-3 rounded border border-paper-edge bg-paper p-4 shadow-card sm:grid-cols-4"
     >
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Título
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Autor
-        <input
-          type="text"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm text-slate-700">
-        Categoría
-        <input
-          type="text"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-      </label>
+      <Input
+        label="Título"
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <Input
+        label="Autor"
+        type="text"
+        value={author}
+        onChange={(e) => setAuthor(e.target.value)}
+      />
+      <Input
+        label="Categoría"
+        type="text"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+      />
       <div className="flex items-end">
-        <button
+        <Button
           type="submit"
-          disabled={isSearching}
-          className="w-full rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+          variant="primary"
+          className="w-full"
+          isLoading={isSearching}
+          iconLeft={!isSearching ? <Search size={14} /> : undefined}
         >
           {isSearching ? "Buscando…" : "Buscar"}
-        </button>
+        </Button>
       </div>
     </form>
   );

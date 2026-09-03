@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Input";
 
 export interface RegisterFormValues {
   name: string;
@@ -28,70 +30,51 @@ export function RegisterForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="register-name" className="text-sm text-slate-700">
-          Nombre
-        </label>
-        <input
-          id="register-name"
-          name="name"
-          type="text"
-          required
-          autoComplete="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-        />
-      </div>
+      <Input
+        id="register-name"
+        name="name"
+        type="text"
+        label="Nombre"
+        required
+        autoComplete="name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        disabled={isSubmitting}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="register-email" className="text-sm text-slate-700">
-          Email
-        </label>
-        <input
-          id="register-email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-        />
-      </div>
+      <Input
+        id="register-email"
+        name="email"
+        type="email"
+        label="Email"
+        required
+        autoComplete="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled={isSubmitting}
+      />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="register-password" className="text-sm text-slate-700">
-          Contraseña
-        </label>
-        <input
-          id="register-password"
-          name="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={isSubmitting}
-          className="rounded border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-        />
-      </div>
+      <Input
+        id="register-password"
+        name="password"
+        type="password"
+        label="Contraseña"
+        required
+        autoComplete="new-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        disabled={isSubmitting}
+      />
 
       {errorMessage ? (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-accent">
           {errorMessage}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" variant="primary" isLoading={isSubmitting}>
         {isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
-      </button>
+      </Button>
     </form>
   );
 }
