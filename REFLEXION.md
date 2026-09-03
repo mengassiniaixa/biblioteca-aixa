@@ -2,7 +2,7 @@
 
 Notas sobre las decisiones de diseño, qué quedó fuera de alcance y qué haría distinto en una segunda iteración.
 
-> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas), la tercera cubre la Etapa 2 y la cuarta la Etapa 3.
+> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas), la tercera cubre la Etapa 2, la cuarta la Etapa 3, y la última documenta un refactor visual posterior del frontend.
 
 ## Etapa 1 — Dominio
 
@@ -90,7 +90,7 @@ El backend no exponía CORS al principio de la etapa (no era necesario para los 
 
 ### Testing
 
-- **59 tests / 14 archivos** con Vitest + Testing Library. Cubre componentes presentacionales (unit, sin red) y páginas (integración con `fetch` mockeado).
+- **59 tests / 14 archivos** al cierre inicial de Etapa 2 con Vitest + Testing Library. Cubre componentes presentacionales (unit, sin red) y páginas (integración con `fetch` mockeado). El refactor visual posterior escaló esa cifra a 82 tests / 20 archivos sin tocar los tests existentes (ver sección de refactor).
 - Storybook queda como manual de estados visuales; no se corren como tests automáticos pero permiten inspeccionar cada componente aislado.
 - **Gotcha con Vitest 2.1:** `toHaveBeenCalledExactlyOnceWith` no existe en esta versión. La combinación `toHaveBeenCalledTimes(1) + toHaveBeenCalledWith(...)` cumple el mismo rol.
 
@@ -101,7 +101,7 @@ El backend no exponía CORS al principio de la etapa (no era necesario para los 
 ### Scope consciente fuera de alcance
 
 - **No hay página `/my-library` dedicada.** Las acciones MEMBER (Prestar / Reservar / Devolver / Cancelar) se ejecutan contextualmente desde `/books` por libro. Preferí no duplicar navegación con una tabla adicional para lo mismo.
-- **Sin toasts / sistema de notificaciones.** Los errores de mutations se muestran con `window.alert`. Es feo pero explícito y no requiere una librería más.
+- **Sin toasts / sistema de notificaciones al cierre inicial de la etapa.** Los errores de mutations se mostraban con `window.alert`. Feo pero explícito y sin librería nueva. *Cerrado después en el refactor visual (V4): sistema Toast + ConfirmDialog propio.*
 - **Sin tests E2E reales**. Los tests de páginas mockean `fetch`; no hay Playwright/Cypress. La verificación E2E fue manual (browser + backend real) al final de cada hito.
 
 ## Etapa 3 — Docker & Postgres
@@ -157,6 +157,81 @@ Es una decisión pequeña pero interesante: el instinto es "expongo todo por si 
 - **Sin gestión de secretos.** `JWT_SECRET` viene por env plana. Para producción real habría que integrar con un secret manager (Docker secrets, Vault, o el equivalente cloud).
 - **Sin CI/CD.** No hay pipeline que corra `docker build` en push a `main`. Todo local.
 
+## Refactor visual del frontend (post-Etapa 3)
+
+### Motivación
+
+Al cerrar Etapa 3 el frontend era funcional pero incompleto de identidad: colores slate genéricos, tipografía del sistema, `window.alert` / `window.confirm` para feedback de mutations, estados de carga con "Cargando…" plano, "biblioteca-aixa" (el nombre del repo) usado como si fuera el nombre del producto en la UI. Se dedicó un ciclo específico a pulir esto antes de considerar el proyecto entregable. La regla base: **NO tocar los tests**. Si un cambio visual forzaba re-escritura de tests, el cambio estaba mal.
+
+Se estructuró en 6 hitos incrementales (V1..V6) más un rename final, cada uno commiteable de forma independiente.
+
+### Sistema de diseño
+
+- **Paleta B/N con acento rojo (#EF4444)**. Minimal (no compite con el contenido: libros, ISBNs, nombres) y con un único color acento reservado para acciones destructivas y estados de error/vencimiento. Los tokens en `tailwind.config.js` viven bajo nombres semánticos (`ink/paper/accent` con escalas `soft/mid/muted/faint/edge/hover/soft`) en vez de la escala neutral de Tailwind directa — el propósito del color queda explícito en el código.
+- **Inter** como fuente sans, self-hosted vía `@fontsource/inter` (sin CDN externo). Elegida por su rendering fino en tamaños chicos (labels, hints).
+- **lucide-react** para iconos. Tree-shakeable por icono (import por nombre), estética consistente, cero config.
+
+### Primitivos en `components/ui/`
+
+Se crearon primitivos con tests + stories antes de reemplazar los usos concretos:
+
+- **Button** (`variant: primary | secondary | ghost | danger`, `size: sm | md | lg`, `isLoading`, `iconLeft/iconRight`). Expone `buttonClassName()` como helper para reusar el estilo en `<Link>` de react-router sin renderizar un `<button>`. `forwardRef` para permitir foco programático (lo usa `ConfirmDialog`).
+- **Input** con `label`, `hint`, `error`, `aria-describedby` y `aria-invalid` automáticos. El label se pinta con `uppercase tracking-wide` como decisión de estilo, pero el texto en el DOM se mantiene igual al que se le pasa como prop — clave para que `getByLabelText(/email/i)` de los tests siga funcionando sin cambios.
+- **Card** + `CardHeader/Title/Description`, con prop `interactive` para hover shadow.
+- **Badge** (`default | muted | outline | danger | success`) para categoría, disponibilidad, rol en topbar y días vencido.
+- **Skeleton** y **TableSkeleton** para estados de carga con `role="status"` + `aria-label`.
+- **Toast** y **ConfirmDialog** como sistema propio (ver más abajo).
+
+### AppShell + Topbar + rutas inmersivas
+
+Las rutas se dividieron en dos grupos con layout distinto:
+
+- **Con shell** (`/`, `/books`, `/overdue`, `*`): dentro de `AppShell` con `Topbar` sticky y container `max-w-6xl` centrado.
+- **Sin shell** (`/login`, `/register`): experiencias inmersivas full-screen con hero de dos columnas (aside ink con texto de marca + section paper con el form).
+
+La motivación de sacar login/register del shell es que la primera impresión del producto no debería estar enmarcada por la navegación interna — el usuario todavía no está adentro. El `Topbar` unifica logo, nav con `NavLink` activo, badge de rol y botón "Salir" (o "Ingresar" / "Crear cuenta" para anónimos): un único lugar donde vive el estado de sesión visible.
+
+### Toasts y confirm dialogs propios (en vez de `sonner`)
+
+Se descartó `sonner` / `react-hot-toast` y se implementó un sistema propio:
+
+- **`ToastProvider` + `useToast()`** en `components/ui/Toast.tsx`. Context con `success/error/info`, auto-dismiss configurable (default 4s), cierre manual, viewport fixed bottom-right con `aria-live="polite"`. Cada toast usa el `role` correcto según kind (`status` para success/info, `alert` para error).
+- **`ConfirmProvider` + `useConfirm()`** basado en promesa: `const ok = await confirm({ title, description, tone, confirmLabel, cancelLabel })`. El diálogo maneja foco inicial en confirmar (Enter directo), Escape cancela, overlay clickeable cancela.
+
+Justificación de no traer una lib: son ~200 líneas entre los dos, cero dependencias, control total del look y de los roles ARIA. Consistente con la decisión de no traer `cors` en Etapa 2 ni `node-pg-migrate` en Etapa 3 — el criterio es que lo que se resuelve en poco código explícito no justifica una dependencia.
+
+Con esto se reemplazaron los `window.alert` / `window.confirm` de `BooksPage`. Cerrado el ítem correspondiente del "qué haría distinto".
+
+### Skeletons y empty states
+
+Los estados intermedios recibieron atención específica:
+
+- **Loading**: `TableSkeleton` con N filas y N columnas configurables reemplaza el "Cargando libros…" plano de `BooksPage` y `OverduePage`. Header y filas son bloques con `animate-pulse bg-paper-mid`.
+- **Empty**: cada tabla tiene un empty state con icono (`BookX` en gris para "sin libros", `CheckCircle2` en verde para "sin vencidos"), titular y copy de segunda línea que sugiere acción o transmite tono. Reemplaza el texto plano "No hay libros para mostrar."
+- **Hover en filas**: `transition-colors hover:bg-paper-soft`. Micro-detalle pero cambia la sensación de tabla estática a tabla interactiva.
+
+### Rename del nombre visible
+
+En la UI aparecía "biblioteca-aixa" (nombre del repo, marca personal) como si fuera el nombre del producto. Se renombró a "Sistema de biblioteca" en topbar, hero de Login/Register, footer y `<title>` del navegador. **El `TOKEN_STORAGE_KEY = "biblioteca-aixa.token"` se mantuvo intocado** — es un identificador interno, no visible, y cambiarlo hubiese invalidado tokens ya emitidos.
+
+Lección: nombres visibles y nombres internos tienen ciclos de vida y consumidores distintos. El nombre visible describe el producto y puede cambiar libremente; el nombre interno es un identificador estable.
+
+### La regla de no tocar los tests
+
+El refactor tocó ~12 archivos entre primitivos, páginas, formularios y tablas, agregó 4 archivos de tests nuevos (Toast, ConfirmDialog, Skeleton, TableSkeleton) y llevó la suite de 70/70 a 82/82. **Ninguno de los tests existentes tuvo que cambiar.** Esto validó tres cosas de la Etapa 2:
+
+- Los tests que buscan por accesibilidad (`getByLabelText`, `getByRole`, `getByText`) sobreviven cambios de CSS y de estructura HTML.
+- El texto visible (botones "Nuevo libro", "Editar", "Eliminar") no cambió — solo su estilo, así que las queries por texto siguieron matcheando.
+- Los tests de integración de páginas dependían del contrato `LoginForm({ onSubmit, errorMessage })`, no de su implementación interna. Migrar el form a primitivos `Input`/`Button` fue transparente.
+
+Cada vez que un cambio visual amenazaba con romper un test, la señal era que el cambio se estaba metiendo con la semántica accesible del componente, no con el look. Ajustar en esos casos era ajustar el visual para preservar el label / role, no el test.
+
+### Scope consciente fuera de alcance
+
+- **Sin dark mode.** Los tokens `ink/paper` están diseñados para invertirse pero la app hoy asume paleta clara. Agregar `dark:` variants a todos los primitivos y un toggle global quedó fuera de scope.
+- **Sin Storybook para primitivos V4/V5/V6.** Los nuevos (Toast, ConfirmDialog, Skeleton) tienen tests pero no stories. Storybook fue central en Etapa 2 y no se mantuvo estrictamente en el refactor visual.
+- **Sin animaciones de entrada/salida en toasts.** Aparecen y desaparecen en seco. Un `framer-motion` o transiciones CSS resolverían esto pero suman superficie.
+
 ## Qué haría distinto en una segunda iteración
 
 1. **Fakes compartidos para tests** — `domain/src/__test-utils__/` con builders (`aUser().withRole("LIBRARIAN").build()`) y fakes canónicos, en lugar de duplicar `__fakes__/` por carpeta.
@@ -167,7 +242,7 @@ Es una decisión pequeña pero interesante: el instinto es "expongo todo por si 
 6. **Rate limiting y helmet** — no incluidos porque no eran parte del scope, pero son la primera capa que agregaría antes de exponer esto a Internet.
 7. **Cerrar `Fine` / `PayFine`** si el negocio lo pidiera. Hoy la entidad está huérfana.
 8. **Optimistic updates en mutations** — hoy `useLoanBook`, `useReserveBook`, etc. esperan la respuesta del server para invalidar y disparar el refetch. Con optimistic updates la UI reflejaría el cambio al instante y revertiría en `onError`. Vale la pena cuando la latencia sea real (Postgres remoto, no in-memory).
-9. **Toasts en vez de `window.alert`** para errores de mutations. Un `Toaster` global (por ejemplo `sonner` o el propio de shadcn/ui) sacaría los `alert()` sincrónicos que rompen el flow.
+9. ~~**Toasts en vez de `window.alert`** para errores de mutations.~~ *Cerrado en el refactor visual con un `ToastProvider` propio (ver sección "Refactor visual del frontend").*
 10. **Tests E2E con Playwright** — los tests de páginas hoy mockean `fetch`, cubren el mapeo props↔UI pero no el flow real browser→backend. Playwright contra el compose ya levantado sería el complemento natural.
 11. **Página `/my-library` para el MEMBER** si el volumen de préstamos/reservas crece. Hoy las acciones contextuales por libro alcanzan pero no dan una vista consolidada de "lo que tengo".
 12. **Reverse proxy nginx que unifique frontend + backend detrás de un solo puerto**, con `/api/*` ruteado al backend interno. Simplificaría CORS, cerraría el `:3000` al exterior y haría que el frontend pueda usar rutas relativas (sin `VITE_API_BASE_URL` acoplado al build).
