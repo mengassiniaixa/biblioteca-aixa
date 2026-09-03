@@ -1,6 +1,7 @@
 import { useOverdueLoans } from "../../hooks/useLoans";
 import { OverdueLoansTable } from "../../components/OverdueLoansTable/OverdueLoansTable";
 import { ApiError } from "../../api/ApiError";
+import { TableSkeleton } from "../../components/ui";
 
 export function OverduePage() {
   const overdue = useOverdueLoans();
@@ -20,7 +21,7 @@ export function OverduePage() {
       </header>
 
       {overdue.isPending ? (
-        <p className="text-sm text-ink-muted">Cargando…</p>
+        <TableSkeleton rows={3} columns={5} ariaLabel="Cargando préstamos vencidos" />
       ) : overdue.isError ? (
         <p role="alert" className="text-sm text-accent">
           {toErrorMessage(overdue.error)}

@@ -1,3 +1,4 @@
+import { BookX } from "lucide-react";
 import type { Book, Loan, Reservation } from "../../api/types";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -81,9 +82,18 @@ export function BookList({
 }: BookListProps) {
   if (books.length === 0) {
     return (
-      <p className="rounded border border-dashed border-paper-edge bg-paper p-4 text-sm text-ink-muted">
-        No hay libros para mostrar.
-      </p>
+      <div className="flex flex-col items-center gap-2 rounded border border-dashed border-paper-edge bg-paper px-4 py-10 text-center">
+        <span
+          aria-hidden="true"
+          className="rounded-full bg-paper-mid p-3 text-ink-muted"
+        >
+          <BookX size={22} />
+        </span>
+        <p className="text-sm font-medium text-ink">No hay libros para mostrar.</p>
+        <p className="text-xs text-ink-muted">
+          Probá ajustar los filtros de búsqueda.
+        </p>
+      </div>
     );
   }
 
@@ -118,7 +128,10 @@ export function BookList({
               : null;
             const available = book.availableCopies > 0;
             return (
-              <tr key={book.id} className="border-t border-paper-edge">
+              <tr
+                key={book.id}
+                className="border-t border-paper-edge transition-colors hover:bg-paper-soft"
+              >
                 <td className="px-3 py-2 font-medium text-ink">
                   {book.title}
                 </td>

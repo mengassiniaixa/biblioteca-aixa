@@ -23,7 +23,12 @@ import {
 } from "../../hooks/useReservations";
 import { ApiError } from "../../api/ApiError";
 import type { Book, SearchBooksQuery } from "../../api/types";
-import { Button, useToast, useConfirm } from "../../components/ui";
+import {
+  Button,
+  TableSkeleton,
+  useToast,
+  useConfirm,
+} from "../../components/ui";
 
 type EditingState =
   | { kind: "none" }
@@ -198,7 +203,11 @@ export function BooksPage() {
       ) : null}
 
       {search.isLoading ? (
-        <p className="text-sm text-ink-muted">Cargando libros…</p>
+        <TableSkeleton
+          rows={4}
+          columns={canManage || canMember ? 6 : 5}
+          ariaLabel="Cargando libros"
+        />
       ) : (
         <BookList
           books={search.data ?? []}

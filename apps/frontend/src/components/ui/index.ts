@@ -8,4 +8,5 @@ export { ToastProvider, useToast } from "./Toast";
 export type { Toast, ToastKind, ToastOptions } from "./Toast";
 export { ConfirmProvider, useConfirm } from "./ConfirmDialog";
 export type { ConfirmOptions } from "./ConfirmDialog";
+export { Skeleton, TableSkeleton } from "./Skeleton";
 export { cn } from "./cn";
