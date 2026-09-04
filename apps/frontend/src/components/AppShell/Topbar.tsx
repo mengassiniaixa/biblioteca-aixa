@@ -13,6 +13,7 @@ const NAV_LINK_ACTIVE = "bg-ink text-paper";
 export function Topbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const canManage = user?.role === "LIBRARIAN" || user?.role === "ADMIN";
+  const isMember = user?.role === "MEMBER";
 
   return (
     <header className="sticky top-0 z-30 border-b border-paper-edge bg-paper/95 backdrop-blur">
@@ -35,6 +36,16 @@ export function Topbar() {
           >
             Libros
           </NavLink>
+          {isMember ? (
+            <NavLink
+              to="/my-library"
+              className={({ isActive }) =>
+                cn(NAV_LINK_BASE, isActive ? NAV_LINK_ACTIVE : NAV_LINK_INACTIVE)
+              }
+            >
+              Mi biblioteca
+            </NavLink>
+          ) : null}
           {canManage ? (
             <NavLink
               to="/overdue"

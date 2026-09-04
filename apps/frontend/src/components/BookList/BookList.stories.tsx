@@ -57,6 +57,7 @@ const memberLoans: Loan[] = [
     loanDate: "2026-08-01T00:00:00.000Z",
     dueDate: "2026-08-15T00:00:00.000Z",
     status: "ACTIVE",
+    book: { id: "b1", title: "Dune", author: "Frank Herbert", isbn: "978-1" },
   },
 ];
 
@@ -67,6 +68,12 @@ const memberReservations: Reservation[] = [
     userId: "u1",
     reservationDate: "2026-08-01T00:00:00.000Z",
     status: "PENDING",
+    book: {
+      id: "b2",
+      title: "El Hobbit",
+      author: "J.R.R. Tolkien",
+      isbn: "978-2",
+    },
   },
 ];
 

@@ -33,6 +33,7 @@ function makeLoan(overrides: Partial<Loan> = {}): Loan {
     loanDate: "2026-08-01T00:00:00.000Z",
     dueDate: "2026-08-15T00:00:00.000Z",
     status: "ACTIVE",
+    book: { id: "b1", title: "Dune", author: "Herbert", isbn: "978-1" },
     ...overrides,
   };
 }
@@ -44,6 +45,7 @@ function makeReservation(overrides: Partial<Reservation> = {}): Reservation {
     userId: "u1",
     reservationDate: "2026-08-01T00:00:00.000Z",
     status: "PENDING",
+    book: { id: "b2", title: "Hobbit", author: "Tolkien", isbn: "978-2" },
     ...overrides,
   };
 }

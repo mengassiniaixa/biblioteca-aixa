@@ -6,6 +6,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { HomePage } from "./pages/HomePage";
 import { BooksPage } from "./pages/BooksPage";
 import { OverduePage } from "./pages/OverduePage";
+import { MyLibraryPage } from "./pages/MyLibraryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 const router = createBrowserRouter([
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoute roles={["LIBRARIAN", "ADMIN"]} />,
         children: [{ path: "/overdue", element: <OverduePage /> }],
+      },
+      {
+        element: <ProtectedRoute roles={["MEMBER"]} />,
+        children: [{ path: "/my-library", element: <MyLibraryPage /> }],
       },
       { path: "*", element: <NotFoundPage /> },
     ],

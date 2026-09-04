@@ -53,6 +53,13 @@ export interface UpdateBookRequest {
   totalCopies?: number;
 }
 
+export interface BookSummary {
+  id: string;
+  title: string;
+  author: string;
+  isbn: string;
+}
+
 export interface Loan {
   id: string;
   bookId: string;
@@ -60,6 +67,18 @@ export interface Loan {
   loanDate: string;
   dueDate: string;
   status: string;
+  book: BookSummary;
+}
+
+export interface LoanHistoryEntry {
+  id: string;
+  bookId: string;
+  userId: string;
+  loanDate: string;
+  dueDate: string;
+  returnDate: string | null;
+  status: string;
+  book: BookSummary;
 }
 
 export interface ReturnBookResponse {
@@ -77,6 +96,7 @@ export interface Reservation {
   userId: string;
   reservationDate: string;
   status: string;
+  book: BookSummary;
 }
 
 export interface OverdueLoan {

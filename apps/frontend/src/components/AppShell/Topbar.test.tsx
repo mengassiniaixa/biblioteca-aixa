@@ -53,6 +53,23 @@ describe("Topbar", () => {
     expect(screen.queryByRole("link", { name: /vencidos/i })).not.toBeInTheDocument();
   });
 
+  it("muestra Mi biblioteca solo para MEMBER", () => {
+    const memberToken = makeJwt({ userId: "u1", role: "MEMBER" });
+    const { unmount } = renderTopbar(
+      fakeStorage({ [AUTH_TOKEN_STORAGE_KEY]: memberToken }),
+    );
+    expect(
+      screen.getByRole("link", { name: /mi biblioteca/i }),
+    ).toBeInTheDocument();
+    unmount();
+
+    const librarianToken = makeJwt({ userId: "u2", role: "LIBRARIAN" });
+    renderTopbar(fakeStorage({ [AUTH_TOKEN_STORAGE_KEY]: librarianToken }));
+    expect(
+      screen.queryByRole("link", { name: /mi biblioteca/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("muestra Vencidos y badge de rol para LIBRARIAN", () => {
     const token = makeJwt({ userId: "u1", role: "LIBRARIAN" });
     renderTopbar(fakeStorage({ [AUTH_TOKEN_STORAGE_KEY]: token }));
