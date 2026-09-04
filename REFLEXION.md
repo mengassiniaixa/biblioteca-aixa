@@ -2,7 +2,7 @@
 
 Notas sobre las decisiones de diseño, qué quedó fuera de alcance y qué haría distinto en una segunda iteración.
 
-> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas), la tercera cubre la Etapa 2, la cuarta la Etapa 3, y la última documenta un refactor visual posterior del frontend.
+> **Nomenclatura:** en la consigna oficial la Etapa 1 agrupa dominio + backend HTTP, la Etapa 2 es el frontend con Visual TDD, y la Etapa 3 es docker-compose. Las dos primeras secciones acá cubren la Etapa 1 (dominio y backend por separado, porque son decisiones distintas), la tercera cubre la Etapa 2, la cuarta la Etapa 3, la quinta documenta un refactor visual posterior del frontend, y la sexta agrega una feature nueva (`/my-library` para MEMBER) posterior al refactor.
 
 ## Etapa 1 — Dominio
 
@@ -232,6 +232,59 @@ Cada vez que un cambio visual amenazaba con romper un test, la señal era que el
 - **Sin Storybook para primitivos V4/V5/V6.** Los nuevos (Toast, ConfirmDialog, Skeleton) tienen tests pero no stories. Storybook fue central en Etapa 2 y no se mantuvo estrictamente en el refactor visual.
 - **Sin animaciones de entrada/salida en toasts.** Aparecen y desaparecen en seco. Un `framer-motion` o transiciones CSS resolverían esto pero suman superficie.
 
+## Feature `/my-library` — vista consolidada del MEMBER (post-refactor)
+
+### Motivación
+
+Al cierre de Etapa 2 las acciones del MEMBER (Prestar / Devolver / Reservar / Cancelar) vivían todas contextualmente en `/books`, por libro, resueltas por `resolveMemberAction` dentro de `BookList`. Era suficiente para el flow básico pero no daba una vista consolidada de "lo que tengo" — el MEMBER que quería saber qué debía devolver tenía que scrollear el catálogo entero. La feature agrega una página dedicada `/my-library` con tres secciones (préstamos activos, reservas activas, historial) sin sacar las acciones contextuales de `/books`: ambas conviven.
+
+Este ítem estaba en el "Qué haría distinto" original y se cerró ahora.
+
+### El enriquecimiento del output de los use-cases (dominio)
+
+`ListMyLoans` y `ListMyReservations` originalmente devolvían solo IDs (`bookId`) sin datos del libro. En `/books` eso alcanzaba porque el catálogo ya se listaba en paralelo y `BookList` cruzaba por `bookId`. Pero en `/my-library` no querés forzar al MEMBER a mirar el catálogo entero para saber qué libro es "b1a2c3...".
+
+Se agregó `BookRepository` como dependencia inyectada de los tres use-cases (`ListMyLoans`, `ListMyReservations`, `ListMyLoanHistory`) y cada output devuelve `book: { id, title, author, isbn }` embebido por entry. **Se sigue el mismo patrón que `ListOverdueLoans`** (que ya enriquecía con `book` y `member`): si el book fue eliminado pero el loan/reservation aún existe, la entry se filtra silenciosamente en vez de romper. Es data inconsistente que no debería llegar al UI.
+
+El nuevo use-case `ListMyLoanHistory` es hermano de `ListMyLoans` con dos diferencias: no filtra por status (trae activos + devueltos) y expone `returnDate: Date | null`. Se agregó el port `LoanRepository.findByUser(userId)` sin filtro de status (el `findActiveByUser` existente devuelve solo ACTIVE). Ordena por `loanDate DESC` en el use-case para que la responsabilidad de "orden cronológico" esté en el dominio, no en el adaptador ni en el frontend.
+
+Dominio pasó de 122 a 131 tests con la feature (5 nuevos de `ListMyLoanHistory`, 4 más de ajustes en `ListMyLoans` / `ListMyReservations` con el book enriquecido).
+
+### Cambios contractuales de la API — decisión de romper el shape en vez de duplicar endpoint
+
+`GET /loans/mine` y `GET /reservations/mine` cambiaron su shape (agregaron `book`) sin bump de versión ni endpoint alternativo. Alternativa considerada: dejar los endpoints existentes intactos y crear `/loans/mine/detailed` o similar. Se descartó por dos motivos:
+
+1. **No hay clientes externos.** El único consumidor es este frontend, y se actualizó en el mismo commit-set. Mantener el shape viejo sería precaución ceremonial sin usuario real.
+2. **El shape enriquecido es estrictamente más informativo.** Un cliente que solo usaba `bookId` sigue funcionando (la propiedad no cambió). Solo suma `book`.
+
+`GET /loans/mine/history` sí es endpoint nuevo — no había forma de obtener historial antes. Los adaptadores PG e in-memory implementaron `findByUser` (Pg con `ORDER BY loan_date DESC` a nivel query, aunque el use-case también reordena, para consistencia si algún adapter no ordena).
+
+En el frontend, la actualización de los tipos (`Loan.book: BookSummary`, `Reservation.book: BookSummary`, nuevo `LoanHistoryEntry`) forzó ajustes en los mocks de tests y stories de `BookList`. TypeScript los detectó al hacer typecheck — validación gratis de que ningún consumo del tipo quedó desactualizado.
+
+### Diseño de la página `/my-library`
+
+Tres secciones apiladas verticalmente, cada una autocontenida (`ActiveLoansSection`, `ActiveReservationsSection`, `HistorySection`) con su propio empty state, estado de loading (`TableSkeleton`) y manejo de error. Se usa un componente wrapper `SectionShell` que unifica el patrón `<icono> <titulo> <descripción>` para las tres — evita repetición sin abstraer prematuramente lógica (las secciones internas son distintas).
+
+Decisiones concretas:
+
+- **`DueBadge` local** que computa `daysUntil(dueDate)` y elige tono según el resultado: vencido (danger, rojo), hoy (danger), 1-3 días (outline, alerta suave), 4+ días (muted). La lógica vive en la página, no en el dominio — el dominio ya expone `dueDate: Date` y "cómo mostrar la urgencia" es decisión de UX que puede cambiar sin tocar el use-case.
+- **Confirmaciones antes de acciones destructivas**: Devolver y Cancelar reserva pasan por `useConfirm()` (el sistema propio del refactor visual). Devolver es "confirm neutro" (`tone: default`); Cancelar reserva es `tone: "danger"` porque es una acción que se pierde definitivamente (el turno se libera y hay que reservar de nuevo).
+- **Invalidación de la nueva key en las mutations**: `useLoanBook` y `useReturnLoan` invalidan también `loans/mine/history` en `onSuccess` para que la página se refresque después de acciones. Sin esto, la sección historial mostraba estado stale hasta un refresh manual.
+- **Link en Topbar solo para MEMBER**: `isMember = user?.role === "MEMBER"`. LIBRARIAN/ADMIN ven "Vencidos" pero no "Mi biblioteca" — no tiene sentido que un bibliotecario vea "sus" préstamos si el rol no puede prestar/reservar.
+
+### Tests y contratos
+
+Se agregó `MyLibraryPage.test.tsx` con tres tests de integración (fetch mockeado): renderiza las tres secciones con datos reales, muestra empty states cuando todo viene vacío, y dispara `POST /loans/:id/return` cuando el usuario confirma en el diálogo. `Topbar.test.tsx` se extendió con un test que verifica que el link "Mi biblioteca" aparece solo para MEMBER. Cerrado con 86/86 verde.
+
+**Gotcha con el mock de `fetch` en Vitest**: el client hace `fetch(new URL(...), ...)`, no `fetch("string", ...)`. Los mocks que asumen `url: string` fallan con `url.endsWith is not a function` cuando el argumento es un `URL`. La solución es normalizar en el mock: `const url = typeof input === "string" ? input : input.toString()`. Se documenta acá porque va a repetirse en cualquier test futuro que quiera enrutar respuestas mock por URL.
+
+### Scope consciente fuera de alcance
+
+- **Sin paginación del historial.** El historial se muestra completo. Para un MEMBER activo con años de uso esto puede pesar; con paginación real (cursor por `loanDate`) o infinite scroll sería el próximo paso.
+- **Sin filtros ni búsqueda dentro del historial.** No hay filtro por año, por título ni por estado. Volumen actual no lo justifica.
+- **Sin optimistic updates.** La UI espera la respuesta del server. Es una versión más de lo mismo del item pendiente 8 del "Qué haría distinto".
+- **Sin ordenamiento configurable.** El historial siempre viene ordenado por `loanDate DESC`. No hay toggle para orden ascendente ni por libro.
+
 ## Qué haría distinto en una segunda iteración
 
 1. **Fakes compartidos para tests** — `domain/src/__test-utils__/` con builders (`aUser().withRole("LIBRARIAN").build()`) y fakes canónicos, en lugar de duplicar `__fakes__/` por carpeta.
@@ -244,7 +297,7 @@ Cada vez que un cambio visual amenazaba con romper un test, la señal era que el
 8. **Optimistic updates en mutations** — hoy `useLoanBook`, `useReserveBook`, etc. esperan la respuesta del server para invalidar y disparar el refetch. Con optimistic updates la UI reflejaría el cambio al instante y revertiría en `onError`. Vale la pena cuando la latencia sea real (Postgres remoto, no in-memory).
 9. ~~**Toasts en vez de `window.alert`** para errores de mutations.~~ *Cerrado en el refactor visual con un `ToastProvider` propio (ver sección "Refactor visual del frontend").*
 10. **Tests E2E con Playwright** — los tests de páginas hoy mockean `fetch`, cubren el mapeo props↔UI pero no el flow real browser→backend. Playwright contra el compose ya levantado sería el complemento natural.
-11. **Página `/my-library` para el MEMBER** si el volumen de préstamos/reservas crece. Hoy las acciones contextuales por libro alcanzan pero no dan una vista consolidada de "lo que tengo".
+11. ~~**Página `/my-library` para el MEMBER** si el volumen de préstamos/reservas crece. Hoy las acciones contextuales por libro alcanzan pero no dan una vista consolidada de "lo que tengo".~~ *Cerrado post-refactor: `/my-library` con 3 secciones (activos, reservas, historial), enriqueciendo los use-cases `ListMyLoans` / `ListMyReservations` con `book` y sumando el use-case `ListMyLoanHistory` (ver sección "Feature `/my-library`").*
 12. **Reverse proxy nginx que unifique frontend + backend detrás de un solo puerto**, con `/api/*` ruteado al backend interno. Simplificaría CORS, cerraría el `:3000` al exterior y haría que el frontend pueda usar rutas relativas (sin `VITE_API_BASE_URL` acoplado al build).
 13. **Healthcheck HTTP del backend en compose** para que `frontend` no arranque hasta que el backend responda `/health`, no solo hasta que el proceso levantó.
 14. **CI mínimo en GitHub Actions** — al menos `yarn test` de dominio + `yarn frontend:test` + `docker build` de ambas imágenes en push a `main`.
