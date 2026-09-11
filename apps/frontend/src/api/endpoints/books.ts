@@ -9,6 +9,7 @@ import type {
 export const booksEndpoints = (client: ApiClient) => ({
   search: (query: SearchBooksQuery = {}) =>
     client.request<Book[]>("books", { query: { ...query } }),
+  get: (bookId: string) => client.request<Book>(`books/${bookId}`),
   create: (body: CreateBookRequest) =>
     client.request<Book>("books", { method: "POST", body }),
   update: (bookId: string, body: UpdateBookRequest) =>

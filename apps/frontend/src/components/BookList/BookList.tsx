@@ -1,5 +1,12 @@
 import { BookX } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Book, Loan, Reservation } from "../../api/types";
+import {
+  MEMBER_ACTION_LABEL,
+  MEMBER_ACTION_VARIANT,
+  resolveMemberAction,
+  type MemberAction,
+} from "../../lib/memberActions";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 
@@ -17,54 +24,6 @@ interface BookListProps {
   onCancelReservation?: (reservationId: string) => void;
   isMemberActionPending?: boolean;
 }
-
-type MemberAction =
-  | { kind: "loan"; bookId: string }
-  | { kind: "return"; loanId: string }
-  | { kind: "reserve"; bookId: string }
-  | { kind: "cancel"; reservationId: string };
-
-function resolveMemberAction(
-  book: Book,
-  myLoans: Loan[],
-  myReservations: Reservation[],
-): MemberAction {
-  const activeLoan = myLoans.find(
-    (l) => l.bookId === book.id && l.status !== "RETURNED",
-  );
-  if (activeLoan) {
-    return { kind: "return", loanId: activeLoan.id };
-  }
-  const activeReservation = myReservations.find(
-    (r) =>
-      r.bookId === book.id &&
-      (r.status === "PENDING" || r.status === "AVAILABLE"),
-  );
-  if (activeReservation) {
-    return { kind: "cancel", reservationId: activeReservation.id };
-  }
-  if (book.availableCopies > 0) {
-    return { kind: "loan", bookId: book.id };
-  }
-  return { kind: "reserve", bookId: book.id };
-}
-
-const MEMBER_ACTION_LABEL: Record<MemberAction["kind"], string> = {
-  loan: "Prestar",
-  reserve: "Reservar",
-  return: "Devolver",
-  cancel: "Cancelar reserva",
-};
-
-const MEMBER_ACTION_VARIANT: Record<
-  MemberAction["kind"],
-  "primary" | "secondary" | "ghost" | "danger"
-> = {
-  loan: "primary",
-  reserve: "secondary",
-  return: "secondary",
-  cancel: "ghost",
-};
 
 export function BookList({
   books,
@@ -133,7 +92,12 @@ export function BookList({
                 className="border-t border-paper-edge transition-colors hover:bg-paper-soft"
               >
                 <td className="px-3 py-2 font-medium text-ink">
-                  {book.title}
+                  <Link
+                    to={`/books/${book.id}`}
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {book.title}
+                  </Link>
                 </td>
                 <td className="px-3 py-2 text-ink-mid">{book.author}</td>
                 <td className="px-3 py-2">

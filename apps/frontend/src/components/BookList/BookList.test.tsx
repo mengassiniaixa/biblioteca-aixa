@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
 import { BookList } from "./BookList";
 import type { Book, Loan, Reservation } from "../../api/types";
+
+function renderWithRouter(ui: ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
 
 const sample: Book[] = [
   {
@@ -52,12 +58,12 @@ function makeReservation(overrides: Partial<Reservation> = {}): Reservation {
 
 describe("BookList", () => {
   it("muestra un mensaje cuando no hay libros", () => {
-    render(<BookList books={[]} />);
+    renderWithRouter(<BookList books={[]} />);
     expect(screen.getByText(/no hay libros/i)).toBeInTheDocument();
   });
 
   it("renderiza los datos principales de cada libro", () => {
-    render(<BookList books={sample} />);
+    renderWithRouter(<BookList books={sample} />);
     expect(screen.getByText("Dune")).toBeInTheDocument();
     expect(screen.getByText("Herbert")).toBeInTheDocument();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
@@ -66,7 +72,7 @@ describe("BookList", () => {
   });
 
   it("no muestra acciones si no se habilita canManage ni canMember", () => {
-    render(<BookList books={sample} />);
+    renderWithRouter(<BookList books={sample} />);
     expect(screen.queryByRole("button", { name: /editar/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /eliminar/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /prestar/i })).not.toBeInTheDocument();
@@ -77,7 +83,7 @@ describe("BookList", () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
     const onDelete = vi.fn();
-    render(
+    renderWithRouter(
       <BookList books={sample} canManage onEdit={onEdit} onDelete={onDelete} />,
     );
 
@@ -94,7 +100,7 @@ describe("BookList", () => {
     it("muestra Prestar cuando el libro tiene copias y el usuario no tiene loan/reserva", async () => {
       const user = userEvent.setup();
       const onLoan = vi.fn();
-      render(
+      renderWithRouter(
         <BookList
           books={sample}
           canMember
@@ -111,7 +117,7 @@ describe("BookList", () => {
     it("muestra Reservar cuando el libro no tiene copias disponibles", async () => {
       const user = userEvent.setup();
       const onReserve = vi.fn();
-      render(
+      renderWithRouter(
         <BookList
           books={sample}
           canMember
@@ -128,7 +134,7 @@ describe("BookList", () => {
     it("muestra Devolver cuando el usuario ya tiene un préstamo activo del libro", async () => {
       const user = userEvent.setup();
       const onReturn = vi.fn();
-      render(
+      renderWithRouter(
         <BookList
           books={sample}
           canMember
@@ -145,7 +151,7 @@ describe("BookList", () => {
     it("muestra Cancelar reserva cuando el usuario ya reservó ese libro", async () => {
       const user = userEvent.setup();
       const onCancel = vi.fn();
-      render(
+      renderWithRouter(
         <BookList
           books={sample}
           canMember
@@ -162,7 +168,7 @@ describe("BookList", () => {
     });
 
     it("deshabilita las acciones MEMBER mientras hay una mutation en curso", () => {
-      render(
+      renderWithRouter(
         <BookList
           books={sample}
           canMember

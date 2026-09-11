@@ -21,6 +21,15 @@ export function useSearchBooks(query: SearchBooksQuery) {
   });
 }
 
+export function useBook(bookId: string | undefined) {
+  const { api } = useAuth();
+  return useQuery({
+    queryKey: [BOOKS_KEY, "detail", bookId],
+    queryFn: () => api.books.get(bookId as string),
+    enabled: Boolean(bookId),
+  });
+}
+
 export function useCreateBook() {
   const { api } = useAuth();
   const client = useQueryClient();

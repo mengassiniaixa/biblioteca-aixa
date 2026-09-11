@@ -5,6 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { HomePage } from "./pages/HomePage";
 import { BooksPage } from "./pages/BooksPage";
+import { BookDetailPage } from "./pages/BookDetailPage";
 import { OverduePage } from "./pages/OverduePage";
 import { MyLibraryPage } from "./pages/MyLibraryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { path: "/books", element: <BooksPage /> },
+      { path: "/books/:id", element: <BookDetailPage /> },
       {
         element: <ProtectedRoute />,
         children: [{ path: "/", element: <HomePage /> }],
