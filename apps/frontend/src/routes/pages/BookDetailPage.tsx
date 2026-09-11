@@ -19,10 +19,12 @@ import {
   Button,
   Card,
   Skeleton,
+  Tooltip,
   useConfirm,
   useToast,
 } from "../../components/ui";
 import {
+  MEMBER_ACTION_HINT,
   MEMBER_ACTION_LABEL,
   MEMBER_ACTION_VARIANT,
   resolveMemberAction,
@@ -222,13 +224,18 @@ export function BookDetailPage() {
               </Button>
             ) : null}
             {memberAction ? (
-              <Button
-                variant={MEMBER_ACTION_VARIANT[memberAction.kind]}
-                onClick={() => handleMemberAction(memberAction)}
-                disabled={memberActionPending}
+              <Tooltip
+                content={MEMBER_ACTION_HINT[memberAction.kind]}
+                placement="bottom"
               >
-                {MEMBER_ACTION_LABEL[memberAction.kind]}
-              </Button>
+                <Button
+                  variant={MEMBER_ACTION_VARIANT[memberAction.kind]}
+                  onClick={() => handleMemberAction(memberAction)}
+                  disabled={memberActionPending}
+                >
+                  {MEMBER_ACTION_LABEL[memberAction.kind]}
+                </Button>
+              </Tooltip>
             ) : null}
             {!canManage && !isMember ? (
               <Link

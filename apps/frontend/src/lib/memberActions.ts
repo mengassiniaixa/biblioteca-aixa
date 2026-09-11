@@ -47,3 +47,11 @@ export const MEMBER_ACTION_VARIANT: Record<
   return: "secondary",
   cancel: "ghost",
 };
+
+export const MEMBER_ACTION_HINT: Record<MemberAction["kind"], string> = {
+  loan: "Te llevás el libro. Tenés 14 días para devolverlo.",
+  reserve:
+    "El libro no tiene copias disponibles. Reservás tu turno y te lo asignamos apenas alguien lo devuelva.",
+  return: "Registra la devolución del libro en tu cuenta.",
+  cancel: "Liberás tu turno para este libro.",
+};

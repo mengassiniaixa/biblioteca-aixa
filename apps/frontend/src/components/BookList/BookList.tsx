@@ -2,6 +2,7 @@ import { BookX } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Book, Loan, Reservation } from "../../api/types";
 import {
+  MEMBER_ACTION_HINT,
   MEMBER_ACTION_LABEL,
   MEMBER_ACTION_VARIANT,
   resolveMemberAction,
@@ -9,6 +10,7 @@ import {
 } from "../../lib/memberActions";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
+import { Tooltip } from "../ui/Tooltip";
 
 interface BookListProps {
   books: Book[];
@@ -133,14 +135,16 @@ export function BookList({
                         </>
                       ) : null}
                       {memberAction ? (
-                        <Button
-                          size="sm"
-                          variant={MEMBER_ACTION_VARIANT[memberAction.kind]}
-                          onClick={() => handleMemberAction(memberAction)}
-                          disabled={isMemberActionPending}
-                        >
-                          {MEMBER_ACTION_LABEL[memberAction.kind]}
-                        </Button>
+                        <Tooltip content={MEMBER_ACTION_HINT[memberAction.kind]}>
+                          <Button
+                            size="sm"
+                            variant={MEMBER_ACTION_VARIANT[memberAction.kind]}
+                            onClick={() => handleMemberAction(memberAction)}
+                            disabled={isMemberActionPending}
+                          >
+                            {MEMBER_ACTION_LABEL[memberAction.kind]}
+                          </Button>
+                        </Tooltip>
                       ) : null}
                     </div>
                   </td>
