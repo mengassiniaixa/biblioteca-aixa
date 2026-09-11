@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   CreateBook,
   DeleteBook,
+  GetBook,
   SearchBooks,
   UpdateBook,
 } from "@mi-proyecto/domain";
@@ -35,6 +36,7 @@ interface Deps {
   updateBook: UpdateBook;
   deleteBook: DeleteBook;
   searchBooks: SearchBooks;
+  getBook: GetBook;
   authMiddleware: RequestHandler;
 }
 
@@ -47,6 +49,14 @@ export function buildBooksRouter(deps: Deps): Router {
       const query = searchSchema.parse(req.query);
       const books = await deps.searchBooks.execute(query);
       res.json(books);
+    }),
+  );
+
+  router.get(
+    "/:id",
+    asyncHandler(async (req, res) => {
+      const book = await deps.getBook.execute({ bookId: req.params.id });
+      res.json(book);
     }),
   );
 

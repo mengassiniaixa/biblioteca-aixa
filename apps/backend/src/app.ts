@@ -53,6 +53,7 @@ export function buildApp(container: Container): Express {
       updateBook: useCases.updateBook,
       deleteBook: useCases.deleteBook,
       searchBooks: useCases.searchBooks,
+      getBook: useCases.getBook,
       authMiddleware,
     }),
   );

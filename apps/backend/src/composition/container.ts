@@ -5,6 +5,7 @@ import {
   CancelReservation,
   CreateBook,
   DeleteBook,
+  GetBook,
   GetLibraryStats,
   ListMyLoans,
   ListMyLoanHistory,
@@ -44,6 +45,7 @@ export interface Container {
     updateBook: UpdateBook;
     deleteBook: DeleteBook;
     searchBooks: SearchBooks;
+    getBook: GetBook;
     loanBook: LoanBook;
     returnBook: ReturnBook;
     listOverdueLoans: ListOverdueLoans;
@@ -210,6 +212,7 @@ export function buildContainer(opts: BuildOptions): Container {
       updateBook: new UpdateBook(bookRepository, userRepository),
       deleteBook: new DeleteBook(bookRepository, userRepository),
       searchBooks: new SearchBooks(bookRepository),
+      getBook: new GetBook(bookRepository),
       loanBook: new LoanBook(bookRepository, loanRepository, clock),
       returnBook: new ReturnBook(
         loanRepository,
