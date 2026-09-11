@@ -108,4 +108,11 @@ export class PgBookRepository implements BookRepository {
   async delete(id: string): Promise<void> {
     await this.pool.query("DELETE FROM books WHERE id = $1", [id]);
   }
+
+  async count(): Promise<number> {
+    const { rows } = await this.pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM books",
+    );
+    return Number(rows[0]?.count ?? 0);
+  }
 }

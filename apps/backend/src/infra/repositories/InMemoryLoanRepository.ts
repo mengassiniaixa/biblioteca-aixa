@@ -41,4 +41,8 @@ export class InMemoryLoanRepository implements LoanRepository {
   async findOverdue(today: Date): Promise<Loan[]> {
     return this.loans.filter((l) => l.isOverdue(today));
   }
+
+  async countActive(): Promise<number> {
+    return this.loans.filter((l) => l.status === "ACTIVE").length;
+  }
 }

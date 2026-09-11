@@ -96,4 +96,11 @@ export class PgLoanRepository implements LoanRepository {
     );
     return rows.map(toEntity);
   }
+
+  async countActive(): Promise<number> {
+    const { rows } = await this.pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM loans WHERE status = 'ACTIVE'",
+    );
+    return Number(rows[0]?.count ?? 0);
+  }
 }

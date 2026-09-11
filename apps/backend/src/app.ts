@@ -4,6 +4,7 @@ import { buildAuthRouter } from "./http/authRouter";
 import { buildBooksRouter } from "./http/booksRouter";
 import { buildLoansRouter } from "./http/loansRouter";
 import { buildReservationsRouter } from "./http/reservationsRouter";
+import { buildStatsRouter } from "./http/statsRouter";
 import { authenticate } from "./middleware/authenticate";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -74,6 +75,14 @@ export function buildApp(container: Container): Express {
       reserveBook: useCases.reserveBook,
       cancelReservation: useCases.cancelReservation,
       listMyReservations: useCases.listMyReservations,
+      authMiddleware,
+    }),
+  );
+
+  app.use(
+    "/stats",
+    buildStatsRouter({
+      getLibraryStats: useCases.getLibraryStats,
       authMiddleware,
     }),
   );

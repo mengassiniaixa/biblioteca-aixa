@@ -1,4 +1,4 @@
-import { Email, User, UserRepository } from "@mi-proyecto/domain";
+import { Email, Role, User, UserRepository } from "@mi-proyecto/domain";
 import type { Pool } from "pg";
 
 interface Row {
@@ -51,5 +51,13 @@ export class PgUserRepository implements UserRepository {
       [id],
     );
     return rows[0] ? toEntity(rows[0]) : null;
+  }
+
+  async countByRole(role: Role): Promise<number> {
+    const { rows } = await this.pool.query<{ count: string }>(
+      "SELECT COUNT(*)::text AS count FROM users WHERE role = $1",
+      [role],
+    );
+    return Number(rows[0]?.count ?? 0);
   }
 }

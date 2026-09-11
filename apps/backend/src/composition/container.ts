@@ -5,6 +5,7 @@ import {
   CancelReservation,
   CreateBook,
   DeleteBook,
+  GetLibraryStats,
   ListMyLoans,
   ListMyLoanHistory,
   ListMyReservations,
@@ -51,6 +52,7 @@ export interface Container {
     reserveBook: ReserveBook;
     cancelReservation: CancelReservation;
     listMyReservations: ListMyReservations;
+    getLibraryStats: GetLibraryStats;
   };
   tokenService: JwtTokenService;
   seedLibrarian: (opts: SeedLibrarianOptions) => Promise<void>;
@@ -235,6 +237,12 @@ export function buildContainer(opts: BuildOptions): Container {
       listMyReservations: new ListMyReservations(
         reservationRepository,
         bookRepository,
+      ),
+      getLibraryStats: new GetLibraryStats(
+        bookRepository,
+        loanRepository,
+        userRepository,
+        clock,
       ),
     },
   };

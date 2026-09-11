@@ -1,4 +1,4 @@
-import { User, UserRepository } from "@mi-proyecto/domain";
+import { Role, User, UserRepository } from "@mi-proyecto/domain";
 
 export class InMemoryUserRepository implements UserRepository {
   private users: User[] = [];
@@ -18,5 +18,9 @@ export class InMemoryUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | null> {
     return this.users.find((u) => u.id === id) ?? null;
+  }
+
+  async countByRole(role: Role): Promise<number> {
+    return this.users.filter((u) => u.role === role).length;
   }
 }
