@@ -38,6 +38,7 @@ export { CreateBook } from "./use-cases/books/CreateBook";
 export { UpdateBook } from "./use-cases/books/UpdateBook";
 export { DeleteBook } from "./use-cases/books/DeleteBook";
 export { SearchBooks } from "./use-cases/books/SearchBooks";
+export { GetBook } from "./use-cases/books/GetBook";
 export { LoanBook } from "./use-cases/loans/LoanBook";
 export { ReturnBook } from "./use-cases/loans/ReturnBook";
 export { ListOverdueLoans } from "./use-cases/loans/ListOverdueLoans";
