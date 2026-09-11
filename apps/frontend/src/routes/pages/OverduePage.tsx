@@ -9,10 +9,7 @@ export function OverduePage() {
   return (
     <section className="space-y-6">
       <header>
-        <p className="text-xs uppercase tracking-widest text-ink-muted">
-          Bibliotecarixs
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">
           Préstamos vencidos
         </h1>
         <p className="mt-1 text-sm text-ink-mid">

@@ -73,10 +73,7 @@ export function MyLibraryPage() {
   return (
     <section className="space-y-10">
       <header>
-        <p className="text-xs uppercase tracking-widest text-ink-muted">
-          Socixs
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">
           Mi biblioteca
         </h1>
         <p className="mt-1 text-sm text-ink-mid">
