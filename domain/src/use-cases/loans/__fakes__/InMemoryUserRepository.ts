@@ -1,4 +1,4 @@
-import { User } from "../../../entities/User";
+import { Role, User } from "../../../entities/User";
 import { UserRepository } from "../../../repositories/UserRepository";
 
 export class InMemoryUserRepository implements UserRepository {
@@ -19,5 +19,9 @@ export class InMemoryUserRepository implements UserRepository {
 
   async findById(id: string): Promise<User | null> {
     return this.users.find((u) => u.id === id) ?? null;
+  }
+
+  async countByRole(role: Role): Promise<number> {
+    return this.users.filter((u) => u.role === role).length;
   }
 }

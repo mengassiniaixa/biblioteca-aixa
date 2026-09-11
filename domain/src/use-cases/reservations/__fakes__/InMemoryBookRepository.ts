@@ -49,4 +49,8 @@ export class InMemoryBookRepository implements BookRepository {
   async delete(id: string): Promise<void> {
     this.books = this.books.filter((b) => b.id !== id);
   }
+
+  async count(): Promise<number> {
+    return this.books.length;
+  }
 }

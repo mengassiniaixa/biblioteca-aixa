@@ -7,4 +7,5 @@ export interface LoanRepository {
   findActiveByUser(userId: string): Promise<Loan[]>;
   findByUser(userId: string): Promise<Loan[]>;
   findOverdue(today: Date): Promise<Loan[]>;
+  countActive(): Promise<number>;
 }

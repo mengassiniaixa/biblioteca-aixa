@@ -25,29 +25,8 @@ export class InMemoryBookRepository implements BookRepository {
     return [...this.books];
   }
 
-  async search(query: {
-    title?: string;
-    author?: string;
-    category?: string;
-  }): Promise<Book[]> {
-    return this.books.filter((b) => {
-      if (
-        query.title &&
-        !b.title.toLowerCase().includes(query.title.toLowerCase())
-      )
-        return false;
-      if (
-        query.author &&
-        !b.author.toLowerCase().includes(query.author.toLowerCase())
-      )
-        return false;
-      if (
-        query.category &&
-        b.category.toLowerCase() !== query.category.toLowerCase()
-      )
-        return false;
-      return true;
-    });
+  async search(): Promise<Book[]> {
+    return [...this.books];
   }
 
   async delete(id: string): Promise<void> {

@@ -46,3 +46,4 @@ export { ListMyLoanHistory } from "./use-cases/loans/ListMyLoanHistory";
 export { ReserveBook } from "./use-cases/reservations/ReserveBook";
 export { CancelReservation } from "./use-cases/reservations/CancelReservation";
 export { ListMyReservations } from "./use-cases/reservations/ListMyReservations";
+export { GetLibraryStats } from "./use-cases/stats/GetLibraryStats";

@@ -11,4 +11,5 @@ export interface BookRepository {
     category?: string;
   }): Promise<Book[]>;
   delete(id: string): Promise<void>;
+  count(): Promise<number>;
 }
