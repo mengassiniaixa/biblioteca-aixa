@@ -3,6 +3,7 @@ import { authEndpoints } from "./endpoints/auth";
 import { booksEndpoints } from "./endpoints/books";
 import { loansEndpoints } from "./endpoints/loans";
 import { reservationsEndpoints } from "./endpoints/reservations";
+import { statsEndpoints } from "./endpoints/stats";
 
 export function createApi(getToken: TokenGetter) {
   const client = createApiClient(getToken);
@@ -11,6 +12,7 @@ export function createApi(getToken: TokenGetter) {
     books: booksEndpoints(client),
     loans: loansEndpoints(client),
     reservations: reservationsEndpoints(client),
+    stats: statsEndpoints(client),
   };
 }
 

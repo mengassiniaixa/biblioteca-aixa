@@ -99,6 +99,13 @@ export interface Reservation {
   book: BookSummary;
 }
 
+export interface LibraryStats {
+  totalBooks: number;
+  activeLoans: number;
+  overdueLoans: number;
+  totalMembers: number;
+}
+
 export interface OverdueLoan {
   id: string;
   loanDate: string;
