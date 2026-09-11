@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Library } from "lucide-react";
+import { BookOpen, Bookmark, Library, Search } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { LoginForm, type LoginFormValues } from "../../components/LoginForm/LoginForm";
 import { ApiError } from "../../api/ApiError";
@@ -37,28 +37,52 @@ export function LoginPage() {
 
   return (
     <main className="min-h-screen bg-paper-soft">
-      <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
-        <aside className="hidden bg-ink px-10 py-16 text-paper lg:flex lg:flex-col lg:justify-between">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+        <aside className="relative hidden overflow-hidden bg-ink px-10 py-16 text-paper lg:flex lg:flex-col lg:justify-between">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-paper/5 blur-2xl animate-float-slow"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-accent/10 blur-3xl animate-float-slow"
+            style={{ animationDelay: "-2s" }}
+          />
+
           <Link
             to="/books"
-            className="flex items-center gap-2 font-bold tracking-tight"
+            className="relative flex items-center gap-2 font-bold tracking-tight"
           >
             <Library size={22} strokeWidth={2.25} />
             <span>Sistema de biblioteca</span>
           </Link>
-          <div className="max-w-md">
+
+          <div className="relative max-w-md animate-fade-up">
             <p className="text-xs uppercase tracking-widest text-paper/60">
               Ingresá
             </p>
-            <h1 className="mt-3 text-4xl font-bold leading-tight tracking-tight">
-              Volvé a tu biblioteca.
+            <h1 className="mt-3 text-5xl font-bold leading-[1.05] tracking-tight text-paper sm:text-6xl">
+              Volvé a tu <br />
+              <span className="text-accent">biblioteca</span>.
             </h1>
-            <p className="mt-4 text-sm text-paper/70">
-              Gestioná préstamos, reservas y el catálogo con una interfaz
-              minimal.
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-paper/70">
+              Tu catálogo, tus préstamos y tus reservas te están esperando.
             </p>
+
+            <ul className="mt-8 space-y-3 text-sm text-paper/80">
+              <FeatureItem icon={<Search size={16} />}>
+                Buscá por título, autor o categoría
+              </FeatureItem>
+              <FeatureItem icon={<BookOpen size={16} />}>
+                Prestá libros disponibles al toque
+              </FeatureItem>
+              <FeatureItem icon={<Bookmark size={16} />}>
+                Reservá los que ya están prestados
+              </FeatureItem>
+            </ul>
           </div>
-          <p className="text-xs text-paper/50">© Sistema de biblioteca</p>
+
+          <p className="relative text-xs text-paper/50">© Sistema de biblioteca</p>
         </aside>
 
         <section className="flex items-center justify-center px-6 py-16 sm:px-10">
@@ -101,6 +125,26 @@ export function LoginPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function FeatureItem({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-3">
+      <span
+        aria-hidden="true"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper/10 text-paper"
+      >
+        {icon}
+      </span>
+      <span>{children}</span>
+    </li>
   );
 }
 

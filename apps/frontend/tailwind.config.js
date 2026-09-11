@@ -46,6 +46,20 @@ export default {
       borderRadius: {
         DEFAULT: "0.375rem",
       },
+      keyframes: {
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+      },
+      animation: {
+        "fade-up": "fade-up 700ms ease-out both",
+        "float-slow": "float-slow 6s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
