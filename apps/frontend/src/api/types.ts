@@ -30,6 +30,7 @@ export interface Book {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export interface SearchBooksQuery {
@@ -44,6 +45,7 @@ export interface CreateBookRequest {
   author: string;
   category: string;
   totalCopies: number;
+  coverUrl?: string;
 }
 
 export interface UpdateBookRequest {
@@ -51,6 +53,7 @@ export interface UpdateBookRequest {
   author?: string;
   category?: string;
   totalCopies?: number;
+  coverUrl?: string;
 }
 
 export interface BookSummary {

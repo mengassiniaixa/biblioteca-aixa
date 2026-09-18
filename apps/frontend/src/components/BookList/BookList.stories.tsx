@@ -12,6 +12,7 @@ const sample: Book[] = [
     category: "SciFi",
     totalCopies: 3,
     availableCopies: 2,
+    coverUrl: "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
   },
   {
     id: "b2",

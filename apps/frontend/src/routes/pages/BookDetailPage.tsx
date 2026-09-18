@@ -1,4 +1,4 @@
-import { ArrowLeft, Book as BookIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "../../api/ApiError";
 import type { Book } from "../../api/types";
@@ -16,6 +16,7 @@ import {
 } from "../../hooks/useReservations";
 import {
   Badge,
+  BookCover,
   Button,
   Card,
   Skeleton,
@@ -164,14 +165,13 @@ export function BookDetailPage() {
         </Link>
       </div>
 
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <span
-            aria-hidden="true"
-            className="rounded bg-paper-mid p-4 text-ink"
-          >
-            <BookIcon size={28} />
-          </span>
+      <header className="flex flex-wrap items-start justify-between gap-6">
+        <div className="flex items-start gap-6">
+          <BookCover
+            src={data.coverUrl}
+            alt={`Portada de ${data.title}`}
+            size="lg"
+          />
           <div>
             <p className="text-xs uppercase tracking-widest text-ink-muted">
               {data.category}

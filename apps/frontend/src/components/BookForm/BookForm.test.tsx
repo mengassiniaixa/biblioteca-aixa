@@ -60,6 +60,68 @@ describe("BookForm", () => {
         author: "Herbert",
         category: "SciFi",
         totalCopies: 3,
+        coverUrl: "",
+      },
+    });
+  });
+
+  it("crea con coverUrl cuando se completa el campo", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<BookForm onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText(/isbn/i), "978-9");
+    await user.type(screen.getByLabelText(/título/i), "Nuevo");
+    await user.type(screen.getByLabelText(/autor/i), "Autor");
+    await user.type(screen.getByLabelText(/categoría/i), "Cat");
+    await user.clear(screen.getByLabelText(/copias totales/i));
+    await user.type(screen.getByLabelText(/copias totales/i), "5");
+    await user.type(
+      screen.getByLabelText(/url de portada/i),
+      "https://covers.example.com/nuevo.jpg",
+    );
+    await user.click(screen.getByRole("button", { name: /crear libro/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      mode: "create",
+      values: {
+        isbn: "978-9",
+        title: "Nuevo",
+        author: "Autor",
+        category: "Cat",
+        totalCopies: 5,
+        coverUrl: "https://covers.example.com/nuevo.jpg",
+      },
+    });
+  });
+
+  it("edita reemplazando coverUrl inicial por otra", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(
+      <BookForm
+        mode="edit"
+        initialValues={{
+          ...sampleBook,
+          coverUrl: "https://covers.example.com/vieja.jpg",
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    const coverInput = screen.getByLabelText(/url de portada/i);
+    await user.clear(coverInput);
+    await user.type(coverInput, "https://covers.example.com/nueva.jpg");
+    await user.click(screen.getByRole("button", { name: /guardar cambios/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      mode: "edit",
+      values: {
+        title: "Dune",
+        author: "Herbert",
+        category: "SciFi",
+        totalCopies: 3,
+        coverUrl: "https://covers.example.com/nueva.jpg",
       },
     });
   });

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { Book, CreateBookRequest, UpdateBookRequest } from "../../api/types";
+import { BookCover } from "../ui/BookCover";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
@@ -41,10 +42,12 @@ export function BookForm({
   const [totalCopies, setTotalCopies] = useState(
     initialValues?.totalCopies?.toString() ?? "1",
   );
+  const [coverUrl, setCoverUrl] = useState(initialValues?.coverUrl ?? "");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const copies = Number.parseInt(totalCopies, 10);
+    const trimmedCover = coverUrl.trim();
     if (mode === "edit") {
       onSubmit({
         mode: "edit",
@@ -53,6 +56,7 @@ export function BookForm({
           author: author.trim(),
           category: category.trim(),
           totalCopies: copies,
+          coverUrl: trimmedCover,
         },
       });
       return;
@@ -65,6 +69,7 @@ export function BookForm({
         author: author.trim(),
         category: category.trim(),
         totalCopies: copies,
+        ...(trimmedCover ? { coverUrl: trimmedCover } : {}),
       },
     });
   };
@@ -125,6 +130,21 @@ export function BookForm({
         onChange={(e) => setTotalCopies(e.target.value)}
         disabled={isSubmitting}
       />
+
+      <div className="sm:col-span-2 flex items-end gap-3">
+        <div className="flex-1">
+          <Input
+            label="URL de portada"
+            type="url"
+            placeholder="https://covers.openlibrary.org/b/isbn/..."
+            hint="Opcional. Debe ser una URL pública (http o https)."
+            value={coverUrl}
+            onChange={(e) => setCoverUrl(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        <BookCover src={coverUrl.trim()} alt="Vista previa de la portada" size="md" />
+      </div>
 
       {errorMessage ? (
         <p role="alert" className="sm:col-span-2 text-sm text-accent">

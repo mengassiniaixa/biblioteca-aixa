@@ -9,6 +9,7 @@ import {
   type MemberAction,
 } from "../../lib/memberActions";
 import { Badge } from "../ui/Badge";
+import { BookCover } from "../ui/BookCover";
 import { Button } from "../ui/Button";
 import { Tooltip } from "../ui/Tooltip";
 
@@ -72,6 +73,9 @@ export function BookList({
       <table className="w-full border-collapse text-sm">
         <thead className="bg-paper-mid text-left">
           <tr className="text-xs uppercase tracking-wide text-ink-muted">
+            <th className="px-3 py-2 font-medium">
+              <span className="sr-only">Portada</span>
+            </th>
             <th className="px-3 py-2 font-medium">Título</th>
             <th className="px-3 py-2 font-medium">Autor</th>
             <th className="px-3 py-2 font-medium">Categoría</th>
@@ -93,6 +97,11 @@ export function BookList({
                 key={book.id}
                 className="border-t border-paper-edge transition-colors hover:bg-paper-soft"
               >
+                <td className="px-3 py-2">
+                  <Link to={`/books/${book.id}`} aria-label={`Ver ${book.title}`}>
+                    <BookCover src={book.coverUrl} alt={`Portada de ${book.title}`} size="sm" />
+                  </Link>
+                </td>
                 <td className="px-3 py-2 font-medium text-ink">
                   <Link
                     to={`/books/${book.id}`}

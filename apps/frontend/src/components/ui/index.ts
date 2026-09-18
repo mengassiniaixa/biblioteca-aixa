@@ -10,4 +10,6 @@ export { ConfirmProvider, useConfirm } from "./ConfirmDialog";
 export type { ConfirmOptions } from "./ConfirmDialog";
 export { Skeleton, TableSkeleton } from "./Skeleton";
 export { Tooltip } from "./Tooltip";
+export { BookCover } from "./BookCover";
+export type { BookCoverSize } from "./BookCover";
 export { cn } from "./cn";
