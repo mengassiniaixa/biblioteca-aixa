@@ -9,6 +9,7 @@ interface Row {
   category: string;
   total_copies: number;
   available_copies: number;
+  cover_url: string | null;
 }
 
 function toEntity(row: Row): Book {
@@ -20,26 +21,28 @@ function toEntity(row: Row): Book {
     category: row.category,
     totalCopies: row.total_copies,
     availableCopies: row.available_copies,
+    coverUrl: row.cover_url ?? undefined,
   });
 }
 
 const SELECT_COLS =
-  "id, isbn, title, author, category, total_copies, available_copies";
+  "id, isbn, title, author, category, total_copies, available_copies, cover_url";
 
 export class PgBookRepository implements BookRepository {
   constructor(private readonly pool: Pool) {}
 
   async save(book: Book): Promise<void> {
     await this.pool.query(
-      `INSERT INTO books (id, isbn, title, author, category, total_copies, available_copies)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO books (id, isbn, title, author, category, total_copies, available_copies, cover_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (id) DO UPDATE SET
          isbn = EXCLUDED.isbn,
          title = EXCLUDED.title,
          author = EXCLUDED.author,
          category = EXCLUDED.category,
          total_copies = EXCLUDED.total_copies,
-         available_copies = EXCLUDED.available_copies`,
+         available_copies = EXCLUDED.available_copies,
+         cover_url = EXCLUDED.cover_url`,
       [
         book.id,
         book.isbn,
@@ -48,6 +51,7 @@ export class PgBookRepository implements BookRepository {
         book.category,
         book.totalCopies,
         book.availableCopies,
+        book.coverUrl ?? null,
       ],
     );
   }

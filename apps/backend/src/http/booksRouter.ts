@@ -16,6 +16,7 @@ const createSchema = z.object({
   author: z.string().min(1),
   category: z.string().min(1),
   totalCopies: z.number().int().positive(),
+  coverUrl: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -23,6 +24,7 @@ const updateSchema = z.object({
   author: z.string().min(1).optional(),
   category: z.string().min(1).optional(),
   totalCopies: z.number().int().positive().optional(),
+  coverUrl: z.string().optional(),
 });
 
 const searchSchema = z.object({

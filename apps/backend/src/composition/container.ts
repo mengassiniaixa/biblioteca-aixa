@@ -137,6 +137,7 @@ export function buildContainer(opts: BuildOptions): Container {
         author: "Frank Herbert",
         category: "SciFi",
         totalCopies: 3,
+        coverUrl: "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
       },
       {
         isbn: "9780547928227",
@@ -144,6 +145,7 @@ export function buildContainer(opts: BuildOptions): Container {
         author: "J.R.R. Tolkien",
         category: "Fantasía",
         totalCopies: 2,
+        coverUrl: "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg",
       },
       {
         isbn: "9780132350884",
@@ -151,6 +153,7 @@ export function buildContainer(opts: BuildOptions): Container {
         author: "Robert C. Martin",
         category: "Programación",
         totalCopies: 4,
+        coverUrl: "https://covers.openlibrary.org/b/isbn/9780132350884-L.jpg",
       },
       {
         isbn: "9780307474728",
@@ -158,6 +161,7 @@ export function buildContainer(opts: BuildOptions): Container {
         author: "Gabriel García Márquez",
         category: "Ficción",
         totalCopies: 2,
+        coverUrl: "https://covers.openlibrary.org/b/isbn/9780307474728-L.jpg",
       },
     ];
     for (const input of initial) {
