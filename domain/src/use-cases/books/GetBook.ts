@@ -13,6 +13,7 @@ interface GetBookOutput {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export class GetBook {
@@ -31,6 +32,7 @@ export class GetBook {
       category: book.category,
       totalCopies: book.totalCopies,
       availableCopies: book.availableCopies,
+      coverUrl: book.coverUrl,
     };
   }
 }

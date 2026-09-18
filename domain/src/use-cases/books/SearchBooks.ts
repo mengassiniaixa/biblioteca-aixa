@@ -14,6 +14,7 @@ interface SearchBooksOutput {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export class SearchBooks {
@@ -41,6 +42,7 @@ export class SearchBooks {
       category: book.category,
       totalCopies: book.totalCopies,
       availableCopies: book.availableCopies,
+      coverUrl: book.coverUrl,
     }));
   }
 }

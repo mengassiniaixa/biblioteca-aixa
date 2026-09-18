@@ -9,10 +9,23 @@ interface BookProps {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export class Book {
   private constructor(private props: BookProps) {}
+
+  private static validateCoverUrl(value: string): void {
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      throw new Error("coverUrl must be a valid http(s) URL");
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("coverUrl must be a valid http(s) URL");
+    }
+  }
 
   static create(input: {
     isbn: string;
@@ -20,9 +33,13 @@ export class Book {
     author: string;
     category: string;
     totalCopies: number;
+    coverUrl?: string;
   }): Book {
     if (!input.title.trim()) throw new Error("Title is required");
     if (input.totalCopies <= 0) throw new Error("totalCopies must be > 0");
+    if (input.coverUrl !== undefined && input.coverUrl !== "") {
+      Book.validateCoverUrl(input.coverUrl);
+    }
 
     return new Book({
       id: randomUUID(),
@@ -32,6 +49,7 @@ export class Book {
       category: input.category,
       totalCopies: input.totalCopies,
       availableCopies: input.totalCopies,
+      coverUrl: input.coverUrl && input.coverUrl !== "" ? input.coverUrl : undefined,
     });
   }
 
@@ -60,6 +78,9 @@ export class Book {
   get totalCopies() {
     return this.props.totalCopies;
   }
+  get coverUrl(): string | undefined {
+    return this.props.coverUrl;
+  }
 
   hasAvailableCopies(): boolean {
     return this.props.availableCopies > 0;
@@ -83,6 +104,7 @@ export class Book {
     title?: string;
     author?: string;
     category?: string;
+    coverUrl?: string;
   }): void {
     if (input.title !== undefined) {
       if (!input.title.trim()) throw new Error("Title is required");
@@ -90,6 +112,14 @@ export class Book {
     }
     if (input.author !== undefined) this.props.author = input.author;
     if (input.category !== undefined) this.props.category = input.category;
+    if (input.coverUrl !== undefined) {
+      if (input.coverUrl === "") {
+        this.props.coverUrl = undefined;
+      } else {
+        Book.validateCoverUrl(input.coverUrl);
+        this.props.coverUrl = input.coverUrl;
+      }
+    }
   }
 
   updateTotalCopies(newTotal: number): void {

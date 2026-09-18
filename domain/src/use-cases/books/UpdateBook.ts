@@ -11,6 +11,7 @@ interface UpdateBookInput {
   author?: string;
   category?: string;
   totalCopies?: number;
+  coverUrl?: string;
 }
 
 interface UpdateBookOutput {
@@ -21,6 +22,7 @@ interface UpdateBookOutput {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export class UpdateBook {
@@ -47,6 +49,7 @@ export class UpdateBook {
       ...(input.title !== undefined && { title: input.title }),
       ...(input.author !== undefined && { author: input.author }),
       ...(input.category !== undefined && { category: input.category }),
+      ...(input.coverUrl !== undefined && { coverUrl: input.coverUrl }),
     });
 
     if (input.totalCopies !== undefined) {
@@ -63,6 +66,7 @@ export class UpdateBook {
       category: book.category,
       totalCopies: book.totalCopies,
       availableCopies: book.availableCopies,
+      coverUrl: book.coverUrl,
     };
   }
 }

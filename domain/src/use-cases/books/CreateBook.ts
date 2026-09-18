@@ -13,6 +13,7 @@ interface CreateBookInput {
   author: string;
   category: string;
   totalCopies: number;
+  coverUrl?: string;
 }
 
 interface CreateBookOutput {
@@ -23,6 +24,7 @@ interface CreateBookOutput {
   category: string;
   totalCopies: number;
   availableCopies: number;
+  coverUrl?: string;
 }
 
 export class CreateBook {
@@ -52,6 +54,7 @@ export class CreateBook {
       author: input.author,
       category: input.category,
       totalCopies: input.totalCopies,
+      coverUrl: input.coverUrl,
     });
 
     await this.bookRepository.save(book);
@@ -64,6 +67,7 @@ export class CreateBook {
       category: book.category,
       totalCopies: book.totalCopies,
       availableCopies: book.availableCopies,
+      coverUrl: book.coverUrl,
     };
   }
 }
