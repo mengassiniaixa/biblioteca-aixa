@@ -43,6 +43,9 @@ cp apps/backend/.env.example apps/backend/.env
 - `yarn test:coverage` — reporte de cobertura del dominio
 - `yarn typecheck` — `tsc --noEmit` en todos los workspaces
 - `yarn backend:dev` — levanta el backend en modo watch (`tsx watch`)
+- `yarn backend:test` — corre los tests de integración HTTP del backend (Jest + supertest)
+- `yarn frontend:test` — corre los tests del frontend (Vitest)
+- `yarn frontend:storybook` — levanta Storybook en :6006
 
 ## Backend
 
