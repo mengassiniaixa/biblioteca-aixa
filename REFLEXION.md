@@ -157,6 +157,81 @@ Es una decisión pequeña pero interesante: el instinto es "expongo todo por si 
 - **Sin gestión de secretos.** `JWT_SECRET` viene por env plana. Para producción real habría que integrar con un secret manager (Docker secrets, Vault, o el equivalente cloud).
 - **Sin CI/CD.** No hay pipeline que corra `docker build` en push a `main`. Todo local.
 
+### Hostear este compose en un servidor
+
+La consigna 3 pide investigar qué haría falta para hostear este compose en un servidor real. El compose actual está pensado para dev local (`localhost:8080`, HTTP, `JWT_SECRET=dev-only-secret`, sin proxy) — para llevarlo a Internet hay cuatro capas que hoy no están y que arriba se dejaron fuera de alcance conscientemente. Las anoto acá con la profundidad que pide la consigna para que quede claro qué implicaría cada una.
+
+#### Características generales del hosting
+
+Un VPS Linux modesto (2 vCPU / 2-4 GB RAM) alcanza para correr los tres containers con margen. Lo que hay que resolver además del `docker compose up`:
+
+- **Sistema base con Docker Engine + compose plugin** instalados, usuario no-root en el grupo `docker`, firewall (ufw o el del cloud) que solo abra `:22`, `:80` y `:443`. Los puertos `:3000` (backend) y `:5432` (Postgres) NO se publican al host — se hablan por la red interna del compose. Hoy `docker-compose.yml` ya no publica Postgres, pero sí publica el backend en `:3000`; en producción eso se cierra y todo el tráfico HTTP entra por el reverse proxy.
+- **Volumen persistente para `db-data`** montado en un disco que se pueda respaldar (backup snapshot del cloud o `pg_dump` a un bucket S3/GCS con cron).
+- **Restart policy** (`restart: unless-stopped` en cada service) para que los containers se levanten solos si crashean o si se reinicia la máquina.
+- **Logs con rotación** — por default docker acumula logs sin límite; conviene setear `logging.driver: json-file` con `max-size: 10m` y `max-file: 3` en el compose, o mandar todo a `journald` / un colector remoto.
+- **Monitoreo mínimo** — al menos un healthcheck HTTP en el backend (hoy solo la DB tiene healthcheck, ver ítem 13 del "Qué haría distinto") y un uptime check externo tipo UptimeRobot que golpee `/health` cada 5 min y avise por mail si cae.
+- **Actualizaciones** — plan concreto de `docker compose pull && docker compose up -d` para tomar imágenes nuevas sin downtime largo. Con dos backends detrás del proxy se podría hacer rolling; con uno solo hay ~2s de corte y alcanza para este scope.
+
+#### Dominio y certificados HTTPS
+
+Hoy el frontend habla al backend por `http://localhost:3000` (build arg `VITE_API_BASE_URL`) y el sitio se sirve por HTTP plano. En producción hay dos pasos:
+
+1. **Dominio + DNS.** Comprar/usar un dominio (ej. `biblioteca.mengassini.dev`), crear un registro `A` que apunte a la IP pública del servidor, y opcionalmente un `CNAME` para `www`. Con eso el navegador puede llegar al servidor por nombre en vez de por IP.
+2. **Certificados TLS con Let's Encrypt.** Los navegadores modernos marcan HTTP como "no seguro" y muchas APIs (localStorage, service workers) exigen HTTPS. La forma estándar es delegar el certificado al reverse proxy:
+   - **Caddy** — el más simple: en el `Caddyfile` se pone el dominio y Caddy pide, renueva y sirve el certificado con Let's Encrypt automáticamente. Cero config de ACME.
+   - **Traefik** — más config pero integra directo con las labels de docker; se pone `traefik.http.routers.frontend.tls.certresolver=le` y listo.
+   - **Nginx + certbot** — el clásico. Nginx sirve, certbot corre por cron cada 60 días y renueva. Más ceremonial pero es lo más documentado.
+
+Los certificados vencen cada 90 días — cualquiera de las tres opciones renueva sin intervención manual, pero hay que dejarlo probado la primera vez.
+
+Con el proxy terminando TLS, el tráfico dentro del compose sigue siendo HTTP plano (backend → frontend estático → DB), lo cual es correcto: la red interna del compose no es enrutable desde afuera.
+
+#### Reverse proxy
+
+Un reverse proxy es un servidor HTTP que se para "delante de" uno o varios servicios internos y decide, según el request entrante (host, path, header), a cuál rutear. Desde el navegador se ve un único endpoint; adentro puede haber N containers.
+
+En este proyecto, hoy el navegador hace dos tipos de request a dos hosts distintos:
+- HTML/JS/CSS a `http://localhost:8080` (nginx del frontend)
+- API a `http://localhost:3000` (Express)
+
+Eso obliga a mantener CORS habilitado (`CORS_ORIGIN` en el backend acepta CSV justamente por esto), y expone dos puertos públicos donde alcanzaría con uno. Con un reverse proxy adelante:
+
+```
+Internet (443) ──> Caddy/Traefik/Nginx ──> frontend (nginx interno)     [servido en /]
+                                       └─> backend (express)             [proxy_pass /api/*]
+```
+
+Ventajas concretas:
+
+- **Un solo puerto público** (`:443`), `:3000` cerrado al exterior.
+- **CORS deja de ser necesario** — el frontend hace `fetch("/api/books")` con rutas relativas al mismo host, no hay cross-origin.
+- **`VITE_API_BASE_URL` no queda acoplado al dominio del despliegue** — hoy el build del frontend embebe la URL del backend; con proxy, `VITE_API_BASE_URL=""` (o `/api`) y el mismo build sirve para cualquier dominio.
+- **TLS termination en un solo lugar** — el proxy tiene el certificado, los containers de atrás siguen hablando HTTP plano por la red interna.
+- **Punto único para agregar rate limiting, WAF, compresión gzip/brotli, cache de assets estáticos, logs de acceso unificados.**
+
+Esto está anotado como ítem 12 del "Qué haría distinto" — sería el primer cambio de arquitectura antes de exponer el compose a Internet.
+
+#### Gestión de secretos
+
+Hoy `JWT_SECRET`, `POSTGRES_PASSWORD` y las credenciales del `SEED_LIBRARIAN` viajan como variables de entorno en `.env` planos (ver `.env.example`). Para dev local está bien; para producción hay dos problemas:
+
+- El `.env` termina en el disco del servidor sin cifrar. Si alguien accede al filesystem (o el disco se clona/snapshotea) tiene todos los secretos en claro.
+- Cambiar un secreto obliga a editar el archivo y reiniciar los containers — no hay rotación automática.
+
+Opciones ordenadas de menor a mayor complejidad:
+
+1. **Docker secrets** (nativo de compose/swarm) — los secretos se montan como archivos read-only en `/run/secrets/<nombre>` dentro del container en vez de como env vars. El backend leería `readFileSync("/run/secrets/jwt_secret", "utf8")` en el bootstrap. Cambio chico, mejora concreta: no aparecen en `docker inspect`, no se loguean por accidente al imprimir `process.env`.
+2. **Variables de entorno del orquestador** — si el compose corre en un PaaS (Railway, Fly.io, Render, DigitalOcean App Platform), los secretos se cargan desde el panel del proveedor y no viven en el repo ni en el disco del servidor. Es la forma más pragmática para un proyecto de este tamaño.
+3. **Secret manager dedicado** — HashiCorp Vault, AWS Secrets Manager, GCP Secret Manager, Doppler. El backend pide el secreto por API al arrancar (o vía sidecar). Permite rotación, auditoría de acceso, versionado y expiración. Es el estándar en organizaciones más grandes y donde hay compliance (SOC2, HIPAA).
+
+En cualquiera de las tres, la regla base sigue siendo:
+
+- **Nada de secretos en el repo.** `.env` en `.gitignore` (ya está), solo `.env.example` con placeholders commiteado.
+- **Secretos distintos por ambiente.** El `JWT_SECRET` de producción no puede ser el mismo que el de staging ni el default `dev-only-secret` del example.
+- **Rotables sin redeploy** (aspiracional) — si un secreto se compromete hay que poder cambiarlo sin volver a buildear las imágenes.
+
+Este proyecto, siendo académico, se queda en el nivel 1 como próximo paso natural (ítem 12 sigue apuntando a esto de refilón).
+
 ## Refactor visual del frontend (post-Etapa 3)
 
 ### Motivación
