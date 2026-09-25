@@ -11,6 +11,7 @@
     "test:coverage": "yarn workspace @mi-proyecto/domain test:coverage",
     "typecheck": "yarn workspaces run typecheck",
     "backend:dev": "yarn workspace @mi-proyecto/backend dev",
+    "backend:test": "yarn workspace @mi-proyecto/backend test",
     "frontend:dev": "yarn workspace @mi-proyecto/frontend dev",
     "frontend:test": "yarn workspace @mi-proyecto/frontend test",
     "frontend:storybook": "yarn workspace @mi-proyecto/frontend storybook"
