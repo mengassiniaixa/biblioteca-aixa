@@ -43,6 +43,15 @@ services:
       SEED_DEMO_OVERDUE: ${SEED_DEMO_OVERDUE:-false}
     ports:
       - "${BACKEND_PORT:-3000}:3000"
+    healthcheck:
+      # wget viene con BusyBox en node:20-alpine, evita sumar curl al runtime.
+      # --spider chequea sin descargar body; start_period cubre migraciones + seed
+      # inicial (en pg puede tardar unos segundos la primera vez).
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
 
   frontend:
     build:
@@ -51,7 +60,8 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "${FRONTEND_PORT:-8080}:80"
 
