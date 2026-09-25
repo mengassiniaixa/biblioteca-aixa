@@ -1,5 +1,7 @@
 # biblioteca-aixa
 
+[![CI](https://github.com/mengassiniaixa/biblioteca-aixa/actions/workflows/ci.yml/badge.svg)](https://github.com/mengassiniaixa/biblioteca-aixa/actions/workflows/ci.yml)
+
 Sistema de gestión de biblioteca. Monorepo TypeScript con la capa de dominio separada del backend HTTP, siguiendo Clean / Hexagonal Architecture.
 
 ## Estructura

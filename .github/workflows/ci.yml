@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Typecheck + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck (domain + backend + frontend)
+        run: yarn typecheck
+
+      - name: Domain tests (Jest)
+        run: yarn test
+
+      - name: Backend integration tests (Jest + supertest)
+        run: yarn backend:test
+
+      - name: Frontend tests (Vitest)
+        run: yarn frontend:test
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -f apps/backend/Dockerfile -t biblioteca-aixa-backend:ci .
+
+      - name: Build frontend image
+        # VITE_API_BASE_URL se embebe en el build; el default apunta a localhost:3000
+        # y sirve para verificar que la build compila; en un deploy real hay que
+        # rebuildear con la URL publica del backend.
+        run: |
+          docker build \
+            -f apps/frontend/Dockerfile \
+            --build-arg VITE_API_BASE_URL=http://localhost:3000 \
+            -t biblioteca-aixa-frontend:ci \
+            .
